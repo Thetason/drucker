@@ -15,45 +15,44 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
 
-  // 임시 로그인 함수 (나중에 Supabase로 교체)
+  // 실제 API를 사용한 인증 함수
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setMessage(null)
 
     try {
-      // 임시 로직: localStorage에 저장
-      if (isLogin) {
-        // 로그인
-        const savedUser = localStorage.getItem('drucker-user')
-        if (savedUser) {
-          const user = JSON.parse(savedUser)
-          if (user.email === email && user.password === password) {
-            localStorage.setItem('drucker-auth', JSON.stringify({ email, name: user.name }))
-            // 쿠키에도 저장 (미들웨어에서 확인용)
-            document.cookie = `drucker-auth=true; path=/; max-age=${7 * 24 * 60 * 60}` // 7일
-            setMessage({ type: 'success', text: '로그인 성공! 잠시 후 메인으로 이동합니다.' })
-            setTimeout(() => {
-              window.location.href = '/'
-            }, 1500)
-          } else {
-            setMessage({ type: 'error', text: '이메일 또는 비밀번호가 일치하지 않습니다.' })
-          }
-        } else {
-          setMessage({ type: 'error', text: '등록되지 않은 사용자입니다.' })
-        }
-      } else {
-        // 회원가입
-        const newUser = { email, password, name }
-        localStorage.setItem('drucker-user', JSON.stringify(newUser))
-        localStorage.setItem('drucker-auth', JSON.stringify({ email, name }))
-        // 쿠키에도 저장 (미들웨어에서 확인용)
-        document.cookie = `drucker-auth=true; path=/; max-age=${7 * 24 * 60 * 60}` // 7일
-        setMessage({ type: 'success', text: '회원가입 성공! 잠시 후 메인으로 이동합니다.' })
-        setTimeout(() => {
-          window.location.href = '/'
-        }, 1500)
+      const endpoint = isLogin ? '/api/auth/login' : '/api/auth/signup'
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password, name }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setMessage({ type: 'error', text: data.error })
+        return
       }
+
+      // 로컬 스토리지에 사용자 정보 저장
+      localStorage.setItem('drucker-auth', JSON.stringify({
+        id: data.user.id,
+        email: data.user.email,
+        name: data.user.name
+      }))
+
+      setMessage({ 
+        type: 'success', 
+        text: isLogin ? '로그인 성공! 잠시 후 메인으로 이동합니다.' : '회원가입 성공! 잠시 후 메인으로 이동합니다.' 
+      })
+      
+      setTimeout(() => {
+        window.location.href = '/'
+      }, 1500)
     } catch (error) {
       setMessage({ type: 'error', text: '오류가 발생했습니다. 다시 시도해주세요.' })
     } finally {
@@ -197,9 +196,9 @@ export default function AuthPage() {
 
             <div className="mt-4 text-center">
               <p className="text-xs text-gray-500">
-                임시 로그인 시스템입니다. 
+                Vercel Postgres 데이터베이스 연동
                 <br />
-                추후 Supabase Auth로 업그레이드 예정입니다.
+                안전한 bcrypt 암호화 적용
               </p>
             </div>
           </CardContent>

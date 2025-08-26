@@ -7,25 +7,50 @@ import { CreatorPersona } from "@/components/creator-persona"
 import { 
   Target, Lightbulb, 
   Calendar,
-  User, CheckCircle2, AlertCircle
+  User, CheckCircle2, AlertCircle, LogOut
 } from "lucide-react"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState<"persona" | "plan" | "schedule">("persona")
   const [personaComplete, setPersonaComplete] = useState(false)
+  const [currentUser, setCurrentUser] = useState<{ email: string, name: string } | null>(null)
 
-  // Check if persona is already set
+  // Check if persona is already set and user auth
   useEffect(() => {
-    const savedPersona = localStorage.getItem('drucker-persona')
-    if (savedPersona) {
-      const persona = JSON.parse(savedPersona)
-      if (persona.name && persona.whatICanDo?.length > 0) {
-        setPersonaComplete(true)
-        // If persona is complete, default to plan tab
-        setActiveTab("plan")
+    // Check auth
+    const authData = localStorage.getItem('drucker-auth')
+    if (authData) {
+      const user = JSON.parse(authData)
+      setCurrentUser(user)
+      
+      // Check persona for this user
+      const personaKey = `drucker-persona-${user.email}`
+      const savedPersona = localStorage.getItem(personaKey)
+      if (savedPersona) {
+        const persona = JSON.parse(savedPersona)
+        if (persona.name && persona.whatICanDo?.length > 0) {
+          setPersonaComplete(true)
+          // If persona is complete, default to plan tab
+          setActiveTab("plan")
+        }
       }
     }
   }, [])
+
+  const handleLogout = () => {
+    // 쿠키 삭제
+    document.cookie = 'drucker-auth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+    
+    // 사용자별 페르소나는 유지 (다시 로그인하면 복구됨)
+    localStorage.removeItem('drucker-auth')
+    setCurrentUser(null)
+    setPersonaComplete(false)
+    setActiveTab("persona")
+    
+    window.location.href = '/auth'
+  }
 
   const tabs = [
     { 
@@ -66,6 +91,34 @@ export default function HomePage() {
               <p className="text-sm text-muted-foreground">
                 콘텐츠 기획 & 제작 관리
               </p>
+            </div>
+            
+            {/* User Section */}
+            <div className="flex items-center gap-4">
+              {currentUser ? (
+                <>
+                  <div className="text-right">
+                    <p className="text-sm font-medium">{currentUser.name || '크리에이터'}</p>
+                    <p className="text-xs text-gray-500">{currentUser.email}</p>
+                  </div>
+                  <Button 
+                    onClick={handleLogout}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-2"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    로그아웃
+                  </Button>
+                </>
+              ) : (
+                <Link href="/auth">
+                  <Button size="sm" className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700">
+                    <User className="h-4 w-4 mr-2" />
+                    로그인
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
         </div>

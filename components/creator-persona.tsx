@@ -91,22 +91,36 @@ export function CreatorPersona({ onPersonaComplete }: CreatorPersonaProps = {}) 
   const [isComplete, setIsComplete] = useState(false)
   const [suggestions, setSuggestions] = useState<string[]>([])
 
-  // Load saved persona
+  // Get current user
+  const getCurrentUser = () => {
+    const authData = localStorage.getItem('drucker-auth')
+    return authData ? JSON.parse(authData) : null
+  }
+
+  // Load saved persona for current user
   useEffect(() => {
-    const saved = localStorage.getItem('drucker-persona')
-    if (saved) {
-      setPersona(JSON.parse(saved))
-      setIsComplete(true)
+    const currentUser = getCurrentUser()
+    if (currentUser) {
+      const personaKey = `drucker-persona-${currentUser.email}`
+      const saved = localStorage.getItem(personaKey)
+      if (saved) {
+        setPersona(JSON.parse(saved))
+        setIsComplete(true)
+      }
     }
   }, [])
 
-  // Auto-save
+  // Auto-save for current user
   useEffect(() => {
     if (persona.name) {
-      localStorage.setItem('drucker-persona', JSON.stringify({
-        ...persona,
-        updatedAt: new Date().toISOString()
-      }))
+      const currentUser = getCurrentUser()
+      if (currentUser) {
+        const personaKey = `drucker-persona-${currentUser.email}`
+        localStorage.setItem(personaKey, JSON.stringify({
+          ...persona,
+          updatedAt: new Date().toISOString()
+        }))
+      }
     }
   }, [persona])
 

@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
 }
 
 function generatePrompt(userInput: string, type: string): string {
-  const prompts = {
+  const prompts: Record<string, string> = {
     story: `당신은 픽사의 스토리텔링 전문가입니다. 다음 릴스 아이디어를 픽사 스토리 스파인 구조로 발전시켜주세요:
     
     아이디어: ${userInput}
@@ -91,7 +91,7 @@ function generatePrompt(userInput: string, type: string): string {
 }
 
 function getFallbackResponse(type: string): string {
-  const fallbacks = {
+  const fallbacks: Record<string, string> = {
     story: `💡 AI가 준비 중입니다. 수동 템플릿을 참고하세요:
     
     1. 배경: 많은 사람들이 [문제]를 겪고 있습니다

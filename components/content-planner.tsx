@@ -62,7 +62,9 @@ interface ContentPlan {
 
 export function ContentPlanner() {
   const [currentStep, setCurrentStep] = useState<'package' | 'story' | 'retention' | 'review'>('package')
-  const [plan, setPlan] = useState<ContentPlan>({
+  const [showInspiration, setShowInspiration] = useState(true)
+  const [savedPlans, setSavedPlans] = useState<any[]>([])
+  const [plan, setPlan] = useState<any>({
     // 패키징
     titles: ["", "", "", "", ""],
     selectedTitle: 0,
@@ -106,7 +108,15 @@ export function ContentPlanner() {
       retentionPlan: false,
       evidenceIncluded: false,
       ctaClear: false
-    }
+    },
+    
+    // Additional fields for compatibility
+    title: "",
+    targetAudience: "",
+    hook: "",
+    mainContent: ["", "", ""],
+    keywords: [],
+    duration: "10분"
   })
 
   const steps = [

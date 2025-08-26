@@ -4,13 +4,12 @@ import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Textarea } from "@/components/ui/textarea"
 import { 
   Package, Target, TrendingUp, Clock, 
   Eye, ThumbsUp, MessageCircle, Share2,
-  Video, Camera, Edit, Upload, 
-  CheckCircle, Circle, AlertCircle,
-  FileText, Image, TestTube, Users
+  Video, Camera, Edit,
+  CheckCircle,
+  FileText, Users
 } from "lucide-react"
 
 interface ContentPlan {
@@ -351,7 +350,7 @@ export function ContentPlanner() {
                 size="sm"
                 onClick={() => {
                   console.log('Platform clicked:', key)
-                  setPlan(prev => ({...prev, platform: key as 'youtube' | 'shorts' | 'reels'}))
+                  setPlan((prev: any) => ({...prev, platform: key as 'youtube' | 'shorts' | 'reels'}))
                 }}
                 className="flex items-center gap-2"
               >
@@ -442,7 +441,7 @@ export function ContentPlanner() {
         {/* Main Content Structure */}
         <div className="space-y-2">
           <label className="text-sm font-medium">📋 콘텐츠 구성</label>
-          {plan.mainContent.map((content, index) => (
+          {plan.mainContent.map((content: string, index: number) => (
             <div key={index} className="flex items-center gap-2">
               <span className="text-sm font-medium w-20">파트 {index + 1}</span>
               <input
@@ -489,7 +488,7 @@ export function ContentPlanner() {
           {plan.keywords.length > 0 && (
             <div className="flex flex-wrap gap-2 pt-2">
               <span className="text-xs text-muted-foreground">선택됨:</span>
-              {plan.keywords.map((keyword) => (
+              {plan.keywords.map((keyword: string) => (
                 <Badge key={keyword} className="bg-blue-500">
                   #{keyword}
                 </Badge>

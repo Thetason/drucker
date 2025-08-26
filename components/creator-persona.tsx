@@ -206,7 +206,7 @@ export function CreatorPersona({ onPersonaComplete }: CreatorPersonaProps = {}) 
         if (!persona.primaryPlatform) return 0
         
         // 플랫폼별 최적 업로드 주기 매칭
-        const optimalFrequency = {
+        const optimalFrequency: Record<string, string[]> = {
           'youtube': ['주 2회', '주 1회'],
           'instagram': ['매일', '주 3-4회'],
           'tiktok': ['매일', '주 3-4회'],

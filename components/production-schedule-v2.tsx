@@ -39,9 +39,14 @@ export function ProductionScheduleV2() {
   const [draggedPlan, setDraggedPlan] = useState<SavedPlan | null>(null)
   const [showPlanLibrary, setShowPlanLibrary] = useState(true)
   
-  const [newTask, setNewTask] = useState({
+  const [newTask, setNewTask] = useState<{
+    title: string
+    stage: Task["stage"]
+    dueDate: string
+    notes: string
+  }>({
     title: "",
-    stage: "planning" as const,
+    stage: "planning",
     dueDate: "",
     notes: ""
   })

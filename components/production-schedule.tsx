@@ -42,9 +42,14 @@ export function ProductionSchedule() {
     }
   ])
 
-  const [newTask, setNewTask] = useState({
+  const [newTask, setNewTask] = useState<{
+    title: string
+    stage: Task["stage"]
+    dueDate: string
+    notes: string
+  }>({
     title: "",
-    stage: "planning" as const,
+    stage: "planning",
     dueDate: "",
     notes: ""
   })

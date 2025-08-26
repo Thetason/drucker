@@ -10,7 +10,7 @@ import {
   Eye, ThumbsUp, MessageCircle, Share2,
   Video, Camera, Edit, Upload, 
   CheckCircle, Circle, AlertCircle,
-  FileText, Image, TestTube
+  FileText, Image, TestTube, Users
 } from "lucide-react"
 
 interface ContentPlan {

@@ -21,10 +21,10 @@ interface PersonaData {
   whatICanDo: string[]  // 내가 잘하는 것
   whatILove: string[]   // 내가 좋아하는 것
   whoIWantToTalkTo: string  // 소통하고 싶은 사람들
-  monetizationPlan: string  // 수익화 계획
+  monetizationPlan: string[]  // 수익화 계획 (복수 선택 가능)
   
   // 상세 페르소나
-  expertise: string  // 전문 분야
+  expertise: string[]  // 전문 분야 (복수 선택 가능)
   experience: string  // 경험/경력
   personality: string[]  // 성격/특징
   contentStyle: string  // 콘텐츠 스타일
@@ -35,7 +35,7 @@ interface PersonaData {
   targetPainPoints: string[]
   
   // 콘텐츠 전략
-  primaryPlatform: string
+  primaryPlatform: string[]  // 주 활동 플랫폼 (복수 선택 가능)
   contentFrequency: string
   contentTopics: string[]
   
@@ -73,15 +73,15 @@ export function CreatorPersona({ onPersonaComplete }: CreatorPersonaProps = {}) 
     whatICanDo: [],
     whatILove: [],
     whoIWantToTalkTo: '',
-    monetizationPlan: '',
-    expertise: '',
+    monetizationPlan: [],
+    expertise: [],
     experience: '',
     personality: [],
     contentStyle: '',
     targetAge: '',
     targetInterests: [],
     targetPainPoints: [],
-    primaryPlatform: '',
+    primaryPlatform: [],
     contentFrequency: '',
     contentTopics: [],
     createdAt: new Date().toISOString(),
@@ -230,7 +230,7 @@ export function CreatorPersona({ onPersonaComplete }: CreatorPersonaProps = {}) 
     const strategyScore = () => {
       // 플랫폼-콘텐츠 적합성
       const platformFit = () => {
-        if (!persona.primaryPlatform) return 0
+        if (!persona.primaryPlatform || persona.primaryPlatform.length === 0) return 0
         
         // 플랫폼별 최적 업로드 주기 매칭
         const optimalFrequency: Record<string, string[]> = {
@@ -240,10 +240,17 @@ export function CreatorPersona({ onPersonaComplete }: CreatorPersonaProps = {}) 
           'threads': ['매일', '주 3-4회']
         }
         
-        const platform = persona.primaryPlatform
         const frequency = persona.contentFrequency
         
-        return optimalFrequency[platform]?.includes(frequency) ? 30 : 15
+        // 선택한 플랫폼 중 하나라도 최적 주기와 매칭되면 점수 부여
+        const hasOptimalMatch = persona.primaryPlatform.some(platform => 
+          optimalFrequency[platform]?.includes(frequency)
+        )
+        
+        // 멀티 플랫폼 보너스 (최대 10점)
+        const multiPlatformBonus = Math.min(persona.primaryPlatform.length * 5, 10)
+        
+        return (hasOptimalMatch ? 20 : 10) + multiPlatformBonus
       }
       
       // 콘텐츠 다양성과 집중도 밸런스
@@ -284,17 +291,21 @@ export function CreatorPersona({ onPersonaComplete }: CreatorPersonaProps = {}) 
       
       // 수익화 모델 다양성
       const monetizationDiversity = () => {
-        const plan = persona.monetizationPlan
-        if (!plan || plan === '아직 없음') return 0
+        const plans = persona.monetizationPlan
+        if (!plans || plans.length === 0 || plans.includes('아직 없음')) return 0
         
-        // 확장 가능한 모델인지
+        // 다양한 수익 모델 보유 점수 (최대 20점)
+        const diversityScore = Math.min(plans.length * 10, 20)
+        
+        // 확장 가능한 모델 보유 여부
         const scalableModels = ['온라인 강의', '제품 판매', '멘토링/컨설팅']
-        const isScalable = scalableModels.includes(plan) ? 30 : 15
+        const hasScalableModel = plans.some(p => scalableModels.includes(p))
+        const scalabilityScore = hasScalableModel ? 20 : 10
         
         // 전문성과 매칭되는지
-        const expertiseMatch = persona.expertise && isScalable ? 10 : 0
+        const expertiseMatch = persona.expertise.length > 0 && hasScalableModel ? 10 : 0
         
-        return isScalable + expertiseMatch
+        return diversityScore + scalabilityScore + expertiseMatch
       }
       
       // 네트워크 효과 가능성
@@ -330,16 +341,25 @@ export function CreatorPersona({ onPersonaComplete }: CreatorPersonaProps = {}) 
       
       // 수익화 계획의 현실성
       const monetizationRealism = () => {
-        const plan = persona.monetizationPlan
-        const hasExpertise = persona.expertise && persona.experience
+        const plans = persona.monetizationPlan
+        if (!plans || plans.length === 0) return 0
         
-        if (plan === '온라인 강의' || plan === '멘토링/컨설팅') {
-          return hasExpertise ? 30 : 10 // 전문성 없이는 비현실적
-        }
-        if (plan === '광고 수익') return 20 // 시간이 오래 걸림
-        if (plan === '아직 없음') return 15 // 괜찮음, 천천히 찾아가도 됨
-        if (plan) return 25
-        return 0
+        const hasExpertise = persona.expertise.length > 0 && persona.experience
+        
+        if (plans.includes('아직 없음')) return 15
+        
+        let totalScore = 0
+        plans.forEach(plan => {
+          if (plan === '온라인 강의' || plan === '멘토링/컨설팅') {
+            totalScore += hasExpertise ? 15 : 5 // 전문성 필요
+          } else if (plan === '광고 수익') {
+            totalScore += 10 // 시간이 걸림
+          } else if (plan === '제품 판매' || plan === '스폰서십') {
+            totalScore += 12
+          }
+        })
+        
+        return Math.min(totalScore, 30) // 최대 30점
       }
       
       return Math.min(100, passionDriven + realisticGoals() + monetizationRealism())
@@ -431,7 +451,11 @@ export function CreatorPersona({ onPersonaComplete }: CreatorPersonaProps = {}) 
                 <Camera className="h-5 w-5 text-purple-500" />
                 <span className="text-sm text-gray-600">플랫폼</span>
               </div>
-              <p className="font-semibold">{persona.primaryPlatform}</p>
+              <p className="font-semibold">
+                {persona.primaryPlatform.map(p => 
+                  platformOptions.find(opt => opt.value === p)?.label
+                ).join(', ')}
+              </p>
             </div>
             <div className="bg-white rounded-lg p-4">
               <div className="flex items-center gap-2 mb-2">
@@ -593,27 +617,48 @@ export function CreatorPersona({ onPersonaComplete }: CreatorPersonaProps = {}) 
             </div>
 
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">전문 분야</label>
+              <label className="text-sm font-medium text-gray-700 mb-2 block">
+                전문 분야 <span className="text-gray-500 text-xs">(복수 선택 가능)</span>
+              </label>
               <div className="grid grid-cols-4 gap-3">
-                {expertiseOptions.map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => setPersona({ ...persona, expertise: option.value })}
-                    className={`p-3 rounded-lg border-2 transition-all ${
-                      persona.expertise === option.value
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <div className="flex flex-col items-center gap-2">
-                      {React.cloneElement(option.icon, { 
-                        className: `h-6 w-6 ${persona.expertise === option.value ? 'text-blue-500' : 'text-gray-400'}` 
-                      })}
-                      <span className="text-xs">{option.label}</span>
-                    </div>
-                  </button>
-                ))}
+                {expertiseOptions.map((option) => {
+                  const isSelected = persona.expertise.includes(option.value)
+                  return (
+                    <button
+                      key={option.value}
+                      onClick={() => {
+                        if (isSelected) {
+                          setPersona({ ...persona, expertise: persona.expertise.filter(e => e !== option.value) })
+                        } else {
+                          setPersona({ ...persona, expertise: [...persona.expertise, option.value] })
+                        }
+                      }}
+                      className={`p-3 rounded-lg border-2 transition-all ${
+                        isSelected
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="flex flex-col items-center gap-2">
+                        {React.cloneElement(option.icon, { 
+                          className: `h-6 w-6 ${isSelected ? 'text-blue-500' : 'text-gray-400'}` 
+                        })}
+                        <span className={`text-xs ${isSelected ? 'text-blue-600 font-medium' : 'text-gray-600'}`}>
+                          {option.label}
+                        </span>
+                        {isSelected && (
+                          <span className="absolute top-1 right-1 h-2 w-2 bg-blue-500 rounded-full"></span>
+                        )}
+                      </div>
+                    </button>
+                  )
+                })}
               </div>
+              {persona.expertise.length > 0 && (
+                <div className="mt-2 text-xs text-gray-600">
+                  선택됨: {persona.expertise.length}개
+                </div>
+              )}
             </div>
 
             <div>
@@ -728,7 +773,7 @@ export function CreatorPersona({ onPersonaComplete }: CreatorPersonaProps = {}) 
             {/* 4. 수익화 계획 */}
             <div>
               <label className="text-sm font-medium text-gray-700 mb-2 block">
-                4. 수익화에 대한 계획은 있나요?
+                4. 수익화에 대한 계획은 있나요? <span className="text-gray-500 text-xs">(복수 선택 가능)</span>
               </label>
               <div className="grid grid-cols-2 gap-3">
                 {[
@@ -738,20 +783,47 @@ export function CreatorPersona({ onPersonaComplete }: CreatorPersonaProps = {}) 
                   "제품 판매",
                   "스폰서십",
                   "아직 없음"
-                ].map((option) => (
-                  <button
-                    key={option}
-                    onClick={() => setPersona({ ...persona, monetizationPlan: option })}
-                    className={`p-3 rounded-lg border-2 transition-all ${
-                      persona.monetizationPlan === option
-                        ? 'border-green-500 bg-green-50'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <span className="text-sm">{option}</span>
-                  </button>
-                ))}
+                ].map((option) => {
+                  const isSelected = persona.monetizationPlan.includes(option)
+                  const isDisabled = option === "아직 없음" ? persona.monetizationPlan.length > 1 : persona.monetizationPlan.includes("아직 없음")
+                  return (
+                    <button
+                      key={option}
+                      onClick={() => {
+                        if (isDisabled) return
+                        if (option === "아직 없음") {
+                          setPersona({ ...persona, monetizationPlan: ["아직 없음"] })
+                        } else if (isSelected) {
+                          setPersona({ ...persona, monetizationPlan: persona.monetizationPlan.filter(m => m !== option) })
+                        } else {
+                          const newPlans = persona.monetizationPlan.filter(m => m !== "아직 없음")
+                          setPersona({ ...persona, monetizationPlan: [...newPlans, option] })
+                        }
+                      }}
+                      disabled={isDisabled}
+                      className={`p-3 rounded-lg border-2 transition-all relative ${
+                        isSelected
+                          ? 'border-green-500 bg-green-50'
+                          : isDisabled 
+                            ? 'border-gray-100 bg-gray-50 cursor-not-allowed opacity-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <span className={`text-sm ${isSelected ? 'font-medium text-green-600' : 'text-gray-700'}`}>
+                        {option}
+                      </span>
+                      {isSelected && option !== "아직 없음" && (
+                        <span className="absolute top-1 right-1 h-2 w-2 bg-green-500 rounded-full"></span>
+                      )}
+                    </button>
+                  )
+                })}
               </div>
+              {persona.monetizationPlan.length > 0 && !persona.monetizationPlan.includes("아직 없음") && (
+                <div className="mt-2 text-xs text-gray-600">
+                  선택된 수익 모델: {persona.monetizationPlan.join(', ')}
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -862,27 +934,50 @@ export function CreatorPersona({ onPersonaComplete }: CreatorPersonaProps = {}) 
             </div>
 
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">주력 플랫폼</label>
+              <label className="text-sm font-medium text-gray-700 mb-2 block">
+                주력 플랫폼 <span className="text-gray-500 text-xs">(복수 선택 가능)</span>
+              </label>
               <div className="grid grid-cols-4 gap-3">
-                {platformOptions.map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => setPersona({ ...persona, primaryPlatform: option.value })}
-                    className={`p-3 rounded-lg border-2 transition-all ${
-                      persona.primaryPlatform === option.value
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <div className="flex flex-col items-center gap-2">
-                      {React.cloneElement(option.icon, { 
-                        className: `h-6 w-6 ${persona.primaryPlatform === option.value ? 'text-blue-500' : 'text-gray-400'}` 
-                      })}
-                      <span className="text-xs">{option.label}</span>
-                    </div>
-                  </button>
-                ))}
+                {platformOptions.map((option) => {
+                  const isSelected = persona.primaryPlatform.includes(option.value)
+                  return (
+                    <button
+                      key={option.value}
+                      onClick={() => {
+                        if (isSelected) {
+                          setPersona({ ...persona, primaryPlatform: persona.primaryPlatform.filter(p => p !== option.value) })
+                        } else {
+                          setPersona({ ...persona, primaryPlatform: [...persona.primaryPlatform, option.value] })
+                        }
+                      }}
+                      className={`p-3 rounded-lg border-2 transition-all relative ${
+                        isSelected
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="flex flex-col items-center gap-2">
+                        {React.cloneElement(option.icon, { 
+                          className: `h-6 w-6 ${isSelected ? 'text-blue-500' : 'text-gray-400'}` 
+                        })}
+                        <span className={`text-xs ${isSelected ? 'text-blue-600 font-medium' : 'text-gray-600'}`}>
+                          {option.label}
+                        </span>
+                        {isSelected && (
+                          <span className="absolute top-1 right-1 h-2 w-2 bg-blue-500 rounded-full"></span>
+                        )}
+                      </div>
+                    </button>
+                  )
+                })}
               </div>
+              {persona.primaryPlatform.length > 0 && (
+                <div className="mt-2 text-xs text-gray-600">
+                  선택된 플랫폼: {persona.primaryPlatform.map(p => 
+                    platformOptions.find(opt => opt.value === p)?.label
+                  ).join(', ')}
+                </div>
+              )}
             </div>
 
             <div>
@@ -1160,16 +1255,18 @@ export function CreatorPersona({ onPersonaComplete }: CreatorPersonaProps = {}) 
               </div>
             )}
             
-            {persona.primaryPlatform && (
+            {persona.primaryPlatform && persona.primaryPlatform.length > 0 && (
               <div className="flex items-center gap-2 p-2 bg-purple-50 rounded-lg">
                 <Star className="h-4 w-4 text-purple-500" />
                 <div className="flex-1">
                   <p className="text-xs font-medium">주력 플랫폼</p>
                   <p className="text-xs text-gray-600">
-                    {platformOptions.find(p => p.value === persona.primaryPlatform)?.label}
+                    {persona.primaryPlatform.map(p => 
+                      platformOptions.find(opt => opt.value === p)?.label
+                    ).join(', ')}
                   </p>
                   <p className="text-xs text-purple-600 font-semibold">
-                    꾸준함 +30
+                    멀티플랫폼 +{Math.min(persona.primaryPlatform.length * 10, 30)}
                   </p>
                 </div>
               </div>

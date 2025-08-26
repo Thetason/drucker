@@ -1,6 +1,6 @@
 # 변경 기록 (Changelog)
 
-## 2025-08-26 (오후)
+## 2025-08-26 (오후 - 최신)
 
 ### 🔐 인증 시스템 구현
 - **회원가입/로그인 기능 추가**
@@ -100,6 +100,27 @@ expertise: string[]        // 복수 선택 가능
 primaryPlatform: string[]  // 복수 선택 가능
 monetizationPlan: string[] // 복수 선택 가능
 ```
+
+### 🔧 입력 필드 상태 관리 버그 수정 (최신)
+- **문제점**
+  - 페르소나 설정 페이지에서 텍스트 입력이 저장되지 않는 문제
+  - "내가 잘하는 것", "내가 좋아하는 것" 등의 필드 입력 불가
+
+- **해결 방법**
+  - Uncontrolled → Controlled Components로 변경
+  - 각 입력 필드별 state 변수 추가:
+    - `canDoInput` - 내가 잘하는 것
+    - `loveInput` - 내가 좋아하는 것  
+    - `targetInterestInput` - 타겟 관심사
+    - `targetPainInput` - 타겟 페인포인트
+    - `contentTopicInput` - 콘텐츠 주제
+    - `personalityInput` - 성격/특징
+
+- **개선사항**
+  - 각 입력 필드에 "추가" 버튼 추가
+  - Enter 키와 버튼 클릭 모두 지원
+  - 빈 문자열 입력 방지 (`trim()` 검증)
+  - 입력 후 자동 필드 초기화
 
 ## 다음 계획
 - [ ] 비밀번호 찾기 기능

@@ -175,6 +175,19 @@ export function CreatorPersona({ onPersonaComplete }: CreatorPersonaProps = {}) 
 
   // Calculate persona stats with advanced creator success metrics
   const getPersonaStats = () => {
+    // 페르소나가 없거나 기본 정보가 없으면 모든 점수 0 반환
+    const hasPersona = persona.name && persona.name.length > 0
+    
+    if (!hasPersona) {
+      return {
+        creativity: 0,
+        expertise: 0,
+        audience: 0,
+        consistency: 0,
+        monetization: 0
+      }
+    }
+    
     // 1. 진정성 점수 (Authenticity) - 라이언의 "내가 좋아하는 것과 잘하는 것의 교집합"
     const authenticityScore = () => {
       const loveCount = persona.whatILove?.length || 0
@@ -239,7 +252,8 @@ export function CreatorPersona({ onPersonaComplete }: CreatorPersonaProps = {}) 
         // 2-3개가 최적 (너무 많으면 산만, 너무 적으면 단조로움)
         if (topicCount === 2 || topicCount === 3) return 30
         if (topicCount === 1 || topicCount === 4) return 20
-        return 10
+        if (topicCount > 4) return 10
+        return 0
       }
       
       // 스타일 정의 명확성
@@ -251,7 +265,8 @@ export function CreatorPersona({ onPersonaComplete }: CreatorPersonaProps = {}) 
         if (!persona.contentFrequency) return 0
         if (persona.contentFrequency === '매일' && !persona.experience) return 5 // 경험 없이 매일은 비현실적
         if (persona.contentFrequency === '주 2회' || persona.contentFrequency === '주 1회') return 20 // 가장 지속가능
-        return 15
+        if (persona.contentFrequency) return 15
+        return 0
       }
       
       return Math.min(100, platformFit() + topicBalance() + styleClarity + feasibility())
@@ -310,7 +325,7 @@ export function CreatorPersona({ onPersonaComplete }: CreatorPersonaProps = {}) 
         if (frequency === '주 2회') return 25
         if (frequency === '주 3-4회') return 15
         if (frequency === '매일') return 10 // 매일은 번아웃 위험
-        return 20
+        return 0
       }
       
       // 수익화 계획의 현실성
@@ -323,7 +338,8 @@ export function CreatorPersona({ onPersonaComplete }: CreatorPersonaProps = {}) 
         }
         if (plan === '광고 수익') return 20 // 시간이 오래 걸림
         if (plan === '아직 없음') return 15 // 괜찮음, 천천히 찾아가도 됨
-        return 25
+        if (plan) return 25
+        return 0
       }
       
       return Math.min(100, passionDriven + realisticGoals() + monetizationRealism())

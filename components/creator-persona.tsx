@@ -90,6 +90,14 @@ export function CreatorPersona({ onPersonaComplete }: CreatorPersonaProps = {}) 
 
   const [isComplete, setIsComplete] = useState(false)
   const [suggestions, setSuggestions] = useState<string[]>([])
+  
+  // Input states for controlled components
+  const [canDoInput, setCanDoInput] = useState('')
+  const [loveInput, setLoveInput] = useState('')
+  const [targetInterestInput, setTargetInterestInput] = useState('')
+  const [targetPainInput, setTargetPainInput] = useState('')
+  const [contentTopicInput, setContentTopicInput] = useState('')
+  const [personalityInput, setPersonalityInput] = useState('')
 
   // Get current user
   const getCurrentUser = () => {
@@ -705,14 +713,27 @@ export function CreatorPersona({ onPersonaComplete }: CreatorPersonaProps = {}) 
                 <input
                   type="text"
                   placeholder="예: React 개발, API 설계"
+                  value={canDoInput}
+                  onChange={(e) => setCanDoInput(e.target.value)}
                   onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      addToList('whatICanDo', (e.target as HTMLInputElement).value)
-                      ;(e.target as HTMLInputElement).value = ''
+                    if (e.key === 'Enter' && canDoInput.trim()) {
+                      addToList('whatICanDo', canDoInput.trim())
+                      setCanDoInput('')
                     }
                   }}
                   className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
                 />
+                <button
+                  onClick={() => {
+                    if (canDoInput.trim()) {
+                      addToList('whatICanDo', canDoInput.trim())
+                      setCanDoInput('')
+                    }
+                  }}
+                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                >
+                  추가
+                </button>
               </div>
               <div className="flex flex-wrap gap-2">
                 {persona.whatICanDo.map((item, i) => (
@@ -741,14 +762,27 @@ export function CreatorPersona({ onPersonaComplete }: CreatorPersonaProps = {}) 
                 <input
                   type="text"
                   placeholder="예: 새로운 기술 학습, 사이드 프로젝트"
+                  value={loveInput}
+                  onChange={(e) => setLoveInput(e.target.value)}
                   onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      addToList('whatILove', (e.target as HTMLInputElement).value)
-                      ;(e.target as HTMLInputElement).value = ''
+                    if (e.key === 'Enter' && loveInput.trim()) {
+                      addToList('whatILove', loveInput.trim())
+                      setLoveInput('')
                     }
                   }}
                   className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
                 />
+                <button
+                  onClick={() => {
+                    if (loveInput.trim()) {
+                      addToList('whatILove', loveInput.trim())
+                      setLoveInput('')
+                    }
+                  }}
+                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                >
+                  추가
+                </button>
               </div>
               <div className="flex flex-wrap gap-2">
                 {persona.whatILove.map((item, i) => (
@@ -874,14 +908,27 @@ export function CreatorPersona({ onPersonaComplete }: CreatorPersonaProps = {}) 
                 <input
                   type="text"
                   placeholder="예: 자기계발, 투자, 부업"
+                  value={targetInterestInput}
+                  onChange={(e) => setTargetInterestInput(e.target.value)}
                   onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      addToList('targetInterests', (e.target as HTMLInputElement).value)
-                      ;(e.target as HTMLInputElement).value = ''
+                    if (e.key === 'Enter' && targetInterestInput.trim()) {
+                      addToList('targetInterests', targetInterestInput.trim())
+                      setTargetInterestInput('')
                     }
                   }}
                   className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
                 />
+                <button
+                  onClick={() => {
+                    if (targetInterestInput.trim()) {
+                      addToList('targetInterests', targetInterestInput.trim())
+                      setTargetInterestInput('')
+                    }
+                  }}
+                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                >
+                  추가
+                </button>
               </div>
               <div className="flex flex-wrap gap-2">
                 {persona.targetInterests.map((item, i) => (

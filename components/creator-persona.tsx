@@ -126,7 +126,7 @@ export function CreatorPersona({ onPersonaComplete }: CreatorPersonaProps = {}) 
 
   // Generate suggestions based on expertise
   useEffect(() => {
-    if (persona.expertise) {
+    if (persona.expertise && persona.expertise.length > 0) {
       const topicSuggestions: { [key: string]: string[] } = {
         business: ["스타트업 경험", "실패와 교훈", "성공 사례", "비즈니스 인사이트"],
         tech: ["개발 튜토리얼", "신기술 리뷰", "프로젝트 과정", "코딩 팁"],
@@ -137,7 +137,19 @@ export function CreatorPersona({ onPersonaComplete }: CreatorPersonaProps = {}) 
         health: ["운동 루틴", "식단 관리", "멘탈 케어", "습관 만들기"],
         entertainment: ["리액션", "커버", "챌린지", "콜라보"]
       }
-      setSuggestions(topicSuggestions[persona.expertise] || [])
+      
+      // 모든 선택된 전문 분야의 제안을 합침
+      const allSuggestions: string[] = []
+      persona.expertise.forEach(exp => {
+        if (topicSuggestions[exp]) {
+          allSuggestions.push(...topicSuggestions[exp])
+        }
+      })
+      
+      // 중복 제거
+      setSuggestions([...new Set(allSuggestions)])
+    } else {
+      setSuggestions([])
     }
   }, [persona.expertise])
 
@@ -1240,16 +1252,18 @@ export function CreatorPersona({ onPersonaComplete }: CreatorPersonaProps = {}) 
           </h3>
           
           <div className="space-y-2">
-            {persona.expertise && (
+            {persona.expertise && persona.expertise.length > 0 && (
               <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-lg">
                 <Gem className="h-4 w-4 text-blue-500" />
                 <div className="flex-1">
                   <p className="text-xs font-medium">전문 분야</p>
                   <p className="text-xs text-gray-600">
-                    {expertiseOptions.find(e => e.value === persona.expertise)?.label}
+                    {persona.expertise.map(exp => 
+                      expertiseOptions.find(e => e.value === exp)?.label
+                    ).join(', ')}
                   </p>
                   <p className="text-xs text-blue-600 font-semibold">
-                    전문성 +25
+                    다중전문 +{Math.min(persona.expertise.length * 15, 30)}
                   </p>
                 </div>
               </div>

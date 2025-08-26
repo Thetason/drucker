@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest) {
+  let type = 'story' // 기본값 설정
+  
   try {
-    const { prompt, type } = await request.json()
+    const body = await request.json()
+    const prompt = body.prompt
+    type = body.type || 'story'
     
     // Ollama API 호출
     const response = await fetch('http://localhost:11434/api/generate', {

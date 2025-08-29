@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 
-const MAX_USERS = 21 // 드러커 21 - 창업자 포함 21명 한정
+const MAX_USERS = 20 // 초기 사용자 20명 제한
 
 export async function POST(request: Request) {
   try {
@@ -36,10 +36,10 @@ export async function POST(request: Request) {
       }
     })
 
-    if (activeUserCount >= MAX_USERS - 1) { // 창업자 1명 제외하고 20명만
+    if (activeUserCount >= MAX_USERS) {
       return NextResponse.json(
         { 
-          error: '드러커 21 멤버 모집이 완료되었습니다. 창업자 포함 21명의 첫 번째 부족이 구성되었습니다. 다음 기회를 기다려주세요.' 
+          error: '죄송합니다. 현재 모집이 마감되었습니다.' 
         },
         { status: 403 }
       )
@@ -70,12 +70,12 @@ export async function POST(request: Request) {
     const currentUserCount = activeUserCount + 1
 
     return NextResponse.json({
-      message: `드러커 21 멤버 #${currentUserCount + 1} 환영합니다! (${currentUserCount + 1}/21명)`,
+      message: `환영합니다! 회원가입이 완료되었습니다.`,
       user,
       userCount: {
-        current: currentUserCount + 1,
+        current: currentUserCount,
         max: MAX_USERS,
-        remaining: MAX_USERS - currentUserCount - 1
+        remaining: MAX_USERS - currentUserCount
       }
     })
   } catch (error) {

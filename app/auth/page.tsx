@@ -1,10 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { User, Mail, Lock, LogIn, UserPlus, ArrowLeft } from "lucide-react"
+import { User, Mail, Lock, LogIn, UserPlus, ArrowLeft, Users } from "lucide-react"
 import Link from "next/link"
 
 export default function AuthPage() {
@@ -14,6 +14,7 @@ export default function AuthPage() {
   const [name, setName] = useState("")
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
+  const [remainingSpots, setRemainingSpots] = useState<number | null>(null)
 
   // 실제 API를 사용한 인증 함수
   const handleAuth = async (e: React.FormEvent) => {
@@ -60,6 +61,16 @@ export default function AuthPage() {
     }
   }
 
+  // Fetch remaining spots on mount (for signup only)
+  useEffect(() => {
+    if (!isLogin) {
+      fetch('/api/auth/spots')
+        .then(res => res.json())
+        .then(data => setRemainingSpots(data.remaining))
+        .catch(() => setRemainingSpots(null))
+    }
+  }, [isLogin])
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -68,6 +79,28 @@ export default function AuthPage() {
           <ArrowLeft className="h-4 w-4" />
           홈으로 돌아가기
         </Link>
+
+        {/* Remaining Spots Banner - Only for Signup */}
+        {!isLogin && remainingSpots !== null && remainingSpots > 0 && (
+          <div className="mb-4 p-3 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4 text-amber-600" />
+                <span className="text-sm font-medium text-amber-900">
+                  남은 자리
+                </span>
+              </div>
+              <span className="text-lg font-bold text-amber-600">
+                {remainingSpots}/20
+              </span>
+            </div>
+            {remainingSpots <= 5 && (
+              <p className="text-xs text-amber-700 mt-1">
+                서둘러주세요! 마감 임박
+              </p>
+            )}
+          </div>
+        )}
 
         <Card className="shadow-xl border-0">
           <CardHeader className="pb-6">
@@ -82,16 +115,9 @@ export default function AuthPage() {
             <CardDescription className="text-center">
               {isLogin 
                 ? '드러커에 오신 것을 환영합니다' 
-                : '드러커 21 - 창업자 포함 21명만 모집합니다'
+                : '크리에이터 여정을 시작하세요'
               }
             </CardDescription>
-            {!isLogin && (
-              <div className="mt-3 text-center">
-                <span className="text-xs bg-black text-white px-3 py-1 rounded-full">
-                  나를 포함 21명 한정
-                </span>
-              </div>
-            )}
           </CardHeader>
 
           <CardContent>

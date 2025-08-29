@@ -191,8 +191,8 @@ export default function AdminDashboard() {
             <div className="flex items-center gap-3">
               <Shield className="h-8 w-8 text-purple-600" />
               <div>
-                <h1 className="text-2xl font-bold">드러커 21 관리자 대시보드</h1>
-                <p className="text-sm text-gray-600">21명 부족 관리 시스템</p>
+                <h1 className="text-2xl font-bold">드러커 관리자 대시보드</h1>
+                <p className="text-sm text-gray-600">사용자 관리 시스템</p>
               </div>
             </div>
             

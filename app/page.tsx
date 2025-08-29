@@ -87,10 +87,9 @@ export default function HomePage() {
               <h1 className="text-2xl font-bold flex items-center gap-2">
                 <Target className="h-7 w-7 text-blue-500" />
                 드러커
-                <span className="text-xs bg-black text-white px-2 py-1 rounded-full ml-2">21</span>
               </h1>
               <p className="text-sm text-muted-foreground">
-                창업자 포함 21명의 첫 번째 부족
+                콘텐츠 기획 & 제작 관리
               </p>
             </div>
             

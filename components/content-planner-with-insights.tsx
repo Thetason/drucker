@@ -8,7 +8,7 @@ import {
   Lightbulb, BookOpen, Rocket, Flag, Save, Download,
   Upload, Trash2, Copy, Check, X, Edit, Film, Camera,
   CheckSquare, AlertTriangle, ThumbsUp, ThumbsDown,
-  Eye, Brain, Heart, AlertCircle, Info
+  Eye, Brain, Heart, AlertCircle, Info, FileText
 } from "lucide-react"
 
 interface ContentPlan {
@@ -30,6 +30,7 @@ interface ContentPlan {
   }
   cta: string
   dmKeyword?: string
+  script?: string  // 추가: 전체 대본
   thumbnailKeywords: string[]
   createdAt: string
   updatedAt: string
@@ -276,6 +277,7 @@ export function ContentPlannerWithInsights() {
     retention: {},
     cta: '',
     dmKeyword: '',
+    script: '',  // 추가: 대본 초기값
     thumbnailKeywords: [],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
@@ -378,6 +380,7 @@ export function ContentPlannerWithInsights() {
       retention: {},
       cta: '',
       dmKeyword: '',
+      script: '',  // 추가: 대본 초기값
       thumbnailKeywords: [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -601,7 +604,7 @@ export function ContentPlannerWithInsights() {
           </div>
 
           {/* Story Structure Selection */}
-          <div className="mb-6">
+          <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-200">
             <div className="flex items-center justify-between mb-3">
               <label className="text-sm font-medium text-gray-700">📖 스토리 구조</label>
               <div className="flex gap-2">
@@ -611,8 +614,8 @@ export function ContentPlannerWithInsights() {
                     onClick={() => setPlan({ ...plan, storyType: key as any, story: {} })}
                     className={`px-3 py-1 rounded-full text-sm transition-all ${
                       plan.storyType === key
-                        ? 'bg-blue-500 text-white'
-                        : 'bg-gray-100 hover:bg-gray-200'
+                        ? 'bg-blue-500 text-white shadow-lg'
+                        : 'bg-white hover:bg-gray-100 border border-gray-200'
                     }`}
                   >
                     {template.icon} {template.name}
@@ -623,11 +626,16 @@ export function ContentPlannerWithInsights() {
 
             {/* Story Fields */}
             <div className="space-y-3">
-              {storyTemplates[plan.storyType].fields.map((field) => (
-                <div key={field.key}>
-                  <label className="text-xs font-medium text-gray-600 mb-1 block">
-                    {field.label}
-                  </label>
+              {storyTemplates[plan.storyType].fields.map((field, index) => (
+                <div key={field.key} className="relative">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs font-bold text-blue-600 bg-blue-100 rounded-full w-5 h-5 flex items-center justify-center">
+                      {index + 1}
+                    </span>
+                    <label className="text-xs font-medium text-gray-600">
+                      {field.label}
+                    </label>
+                  </div>
                   <input
                     type="text"
                     value={plan.story[field.key] || ''}
@@ -636,11 +644,24 @@ export function ContentPlannerWithInsights() {
                       story: { ...plan.story, [field.key]: e.target.value }
                     })}
                     placeholder={field.placeholder}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
                   />
+                  {index < storyTemplates[plan.storyType].fields.length - 1 && (
+                    <div className="absolute -bottom-3 left-2 h-3 w-0.5 bg-blue-300"></div>
+                  )}
                 </div>
               ))}
             </div>
+
+            {/* Story Flow Visualization */}
+            {Object.values(plan.story).filter(v => v).length === storyTemplates[plan.storyType].fields.length && (
+              <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
+                <p className="text-xs font-medium text-green-700 mb-1">✅ 스토리 구조 완성!</p>
+                <p className="text-xs text-green-600">
+                  이제 아래 대본 섹션에서 전체 스크립트를 작성해보세요.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* CTA */}
@@ -662,6 +683,173 @@ export function ContentPlannerWithInsights() {
                 className="w-32 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
               />
             </div>
+          </div>
+
+          {/* Script Section - 추가된 부분 */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-sm font-medium text-gray-700">📝 전체 대본</label>
+              <div className="flex items-center gap-2 text-xs text-gray-500">
+                <Film className="h-3 w-3" />
+                <span>{plan.script ? `${plan.script.length}자` : '0자'}</span>
+              </div>
+            </div>
+            
+            {/* Auto-generate helper */}
+            <div className="mb-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="flex items-start gap-2">
+                <Sparkles className="h-4 w-4 text-blue-600 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-blue-900">대본 작성 가이드</p>
+                  <p className="text-xs text-blue-700 mt-1">
+                    훅 → 스토리 전개 ({storyTemplates[plan.storyType].name}) → CTA 순으로 자연스럽게 연결하세요
+                  </p>
+                  {plan.hook && plan.story && Object.values(plan.story).some(v => v) && plan.cta && (
+                    <button
+                      onClick={() => {
+                        // Generate script from existing content
+                        const storyParts = storyTemplates[plan.storyType].fields
+                          .map(field => plan.story[field.key])
+                          .filter(Boolean)
+                          .join('
+
+')
+                        
+                        const generatedScript = `[오프닝 - 훅]
+${plan.hook}
+
+[본론 - ${storyTemplates[plan.storyType].name}]
+${storyParts}
+
+[마무리 - CTA]
+${plan.cta}${plan.dmKeyword ? `
+
+자세한 자료가 필요하신 분들은 댓글에 "${plan.dmKeyword}"라고 남겨주세요!` : ''}`
+                        
+                        setPlan({ ...plan, script: generatedScript })
+                      }}
+                      className="mt-2 text-xs text-blue-600 hover:text-blue-800 underline"
+                    >
+                      → 입력한 내용으로 초안 생성하기
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <textarea
+              value={plan.script || ''}
+              onChange={(e) => setPlan({ ...plan, script: e.target.value })}
+              placeholder={`[오프닝 - 훅]
+${plan.hook || '시청자를 사로잡을 첫 문장을 작성하세요'}
+
+[본론 - ${storyTemplates[plan.storyType].name}]
+${storyTemplates[plan.storyType].fields.map(f => f.label).join(' → ')} 순서로 전개하세요
+
+[마무리 - CTA]
+${plan.cta || '행동 유도 메시지를 작성하세요'}
+
+[추가 팁/정보] (선택)
+마지막 한 마디나 추가 정보를 넣으세요`}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 resize-none font-mono text-sm"
+              rows={12}
+            />
+
+            {/* Script Templates */}
+            <div className="mt-3 flex gap-2">
+              <button
+                onClick={() => {
+                  const template = plan.platform === 'youtube' 
+                    ? `[인트로]
+안녕하세요, ${persona?.name || '크리에이터'}입니다.
+${plan.hook}
+
+[문제 인식]
+${plan.story.problem || '많은 분들이 이런 고민을 하시죠...'}
+
+[해결책 제시]
+${plan.story.solution || '제가 찾은 해결 방법은...'}
+
+[실제 적용 사례]
+${plan.story.result || '실제로 이렇게 해보니...'}
+
+[핵심 정리]
+오늘 알려드린 핵심은 3가지입니다.
+1. 
+2. 
+3. 
+
+[CTA]
+${plan.cta}
+${plan.dmKeyword ? `더 자세한 자료는 댓글에 "${plan.dmKeyword}"를 남겨주세요!` : ''}
+
+[아웃트로]
+다음 영상에서는 더 유용한 정보로 찾아뵙겠습니다.
+감사합니다!`
+                    : `[훅 - 3초]
+${plan.hook}
+
+[메인 메시지 - 10초]
+${Object.values(plan.story).filter(Boolean).join(' ')}
+
+[CTA - 3초]
+${plan.cta}
+${plan.dmKeyword ? `"${plan.dmKeyword}" 댓글 남기고 자료받아가세요!` : ''}`
+                  
+                  setPlan({ ...plan, script: template })
+                }}
+                className="px-3 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors flex items-center gap-1"
+              >
+                <FileText className="h-3 w-3" />
+                템플릿 적용
+              </button>
+              
+              <button
+                onClick={() => {
+                  if (plan.script) {
+                    navigator.clipboard.writeText(plan.script)
+                    alert('대본이 클립보드에 복사되었습니다!')
+                  }
+                }}
+                className="px-3 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors flex items-center gap-1"
+                disabled={!plan.script}
+              >
+                <Copy className="h-3 w-3" />
+                복사
+              </button>
+            </div>
+
+            {/* Script Analysis */}
+            {plan.script && (
+              <div className="mt-3 grid grid-cols-4 gap-2">
+                <div className="p-2 bg-white rounded-lg border border-gray-200">
+                  <p className="text-xs text-gray-600">예상 시간</p>
+                  <p className="text-sm font-bold text-orange-600">
+                    {Math.ceil(plan.script.length / 150)}분 {Math.round((plan.script.length / 150 % 1) * 60)}초
+                  </p>
+                </div>
+                <div className="p-2 bg-white rounded-lg border border-gray-200">
+                  <p className="text-xs text-gray-600">문장 수</p>
+                  <p className="text-sm font-bold text-orange-600">
+                    {plan.script.split(/[.!?]+/).filter(Boolean).length}개
+                  </p>
+                </div>
+                <div className="p-2 bg-white rounded-lg border border-gray-200">
+                  <p className="text-xs text-gray-600">단락 수</p>
+                  <p className="text-sm font-bold text-orange-600">
+                    {plan.script.split('
+
+').filter(Boolean).length}개
+                  </p>
+                </div>
+                <div className="p-2 bg-white rounded-lg border border-gray-200">
+                  <p className="text-xs text-gray-600">단어 수</p>
+                  <p className="text-sm font-bold text-orange-600">
+                    {plan.script.split(' ').filter(Boolean).length}개
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Save Button */}

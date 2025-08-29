@@ -617,7 +617,7 @@ export function ProductionScheduleV2() {
                     filterStage === key ? 'bg-gray-900 text-white' : 'bg-gray-100 hover:bg-gray-200'
                   }`}
                 >
-                  {React.cloneElement(stage.icon, { className: 'h-3 w-3' })}
+                  <span className="h-3 w-3">{stage.icon}</span>
                   {stage.label}
                 </button>
               ))}

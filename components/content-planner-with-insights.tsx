@@ -711,9 +711,7 @@ export function ContentPlannerWithInsights() {
                         const storyParts = storyTemplates[plan.storyType].fields
                           .map(field => plan.story[field.key])
                           .filter(Boolean)
-                          .join('
-
-')
+                          .join('\n\n')
                         
                         const generatedScript = `[오프닝 - 훅]
 ${plan.hook}
@@ -837,9 +835,7 @@ ${plan.dmKeyword ? `"${plan.dmKeyword}" 댓글 남기고 자료받아가세요!`
                 <div className="p-2 bg-white rounded-lg border border-gray-200">
                   <p className="text-xs text-gray-600">단락 수</p>
                   <p className="text-sm font-bold text-orange-600">
-                    {plan.script.split('
-
-').filter(Boolean).length}개
+                    {plan.script.split('\n\n').filter(Boolean).length}개
                   </p>
                 </div>
                 <div className="p-2 bg-white rounded-lg border border-gray-200">

@@ -838,20 +838,20 @@ ${plan.dmKeyword ? `"${plan.dmKeyword}" 댓글 남기고 자료받아가세요!`
                       
                       if (isKorean) {
                         // 한국어: 평균 분당 280-320자
-                        const baseSpeed = plan.platform === 'youtube_shorts' ? 350 : 300
+                        const baseSpeed = plan.platform === 'shorts' || plan.platform === 'reels' ? 350 : 300
                         seconds = (charCount / baseSpeed) * 60
                         // 문장 사이 pause (0.3초/문장)
                         seconds += sentenceCount * 0.3
                       } else {
                         // 영어: 평균 분당 140-160단어
-                        const baseSpeed = plan.platform === 'youtube_shorts' ? 170 : 150
+                        const baseSpeed = plan.platform === 'shorts' || plan.platform === 'reels' ? 170 : 150
                         seconds = (wordCount / baseSpeed) * 60
                         // 문장 사이 pause (0.5초/문장)
                         seconds += sentenceCount * 0.5
                       }
                       
                       // 플랫폼별 템포 조정
-                      if (plan.platform === 'youtube_shorts' || plan.platform === 'instagram_reels') {
+                      if (plan.platform === 'shorts' || plan.platform === 'reels') {
                         seconds *= 0.85 // 숏폼은 15% 빠름
                       } else if (plan.platform === 'youtube') {
                         seconds *= 1.05 // 롱폼은 5% 느림

@@ -6,11 +6,20 @@ import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
 
-// 마스터 관리자 정보 (필요시 수정)
+// 마스터 관리자 정보 (환경 변수에서 읽어오기)
 const MASTER_ADMIN = {
-  email: 'master@drucker.com',
-  password: 'Master2025!@#',  // 강력한 비밀번호 사용
+  email: process.env.MASTER_EMAIL || 'master@drucker.com',
+  password: process.env.MASTER_PASSWORD || generateSecurePassword(),  // 환경변수 또는 자동 생성
   name: '마스터 관리자'
+}
+
+function generateSecurePassword() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*'
+  let password = ''
+  for (let i = 0; i < 16; i++) {
+    password += chars.charAt(Math.floor(Math.random() * chars.length))
+  }
+  return password
 }
 
 async function createMasterAdmin() {

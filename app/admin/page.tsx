@@ -54,15 +54,12 @@ export default function AdminDashboard() {
     }
   }
 
-  // 간단한 비밀번호 인증 (임시)
-  const handleAuth = () => {
-    if (password === 'Master2025!@#') {
-      setIsAuthorized(true)
-      localStorage.setItem('admin-auth', 'true')
-      fetchUsers()
-    } else {
-      alert('비밀번호가 틀렸습니다.')
-    }
+  // 간단한 비밀번호 인증 (임시) - 실제로는 서버 인증 필요
+  const handleAuth = async () => {
+    // TODO: 서버사이드 인증 구현 필요
+    // 임시로 하드코딩된 비밀번호 제거
+    alert('보안 업데이트 중입니다. 서버 인증 시스템 구현이 필요합니다.')
+    return
   }
 
   useEffect(() => {

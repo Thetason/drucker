@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 
-const MAX_USERS = 100 // 최대 사용자 수 제한
+const MAX_USERS = 21 // 드러커 21 - 창업자 포함 21명 한정
 
 export async function POST(request: Request) {
   try {
@@ -36,10 +36,10 @@ export async function POST(request: Request) {
       }
     })
 
-    if (activeUserCount >= MAX_USERS) {
+    if (activeUserCount >= MAX_USERS - 1) { // 창업자 1명 제외하고 20명만
       return NextResponse.json(
         { 
-          error: '죄송합니다. 현재 서비스 이용자가 100명 정원에 도달했습니다. 대기자 명단에 등록하시려면 admin@drucker.com으로 문의해주세요.' 
+          error: '드러커 21 멤버 모집이 완료되었습니다. 창업자 포함 21명의 첫 번째 부족이 구성되었습니다. 다음 기회를 기다려주세요.' 
         },
         { status: 403 }
       )
@@ -70,11 +70,12 @@ export async function POST(request: Request) {
     const currentUserCount = activeUserCount + 1
 
     return NextResponse.json({
-      message: `회원가입 성공! (현재 이용자: ${currentUserCount}/${MAX_USERS}명)`,
+      message: `드러커 21 멤버 #${currentUserCount + 1} 환영합니다! (${currentUserCount + 1}/21명)`,
       user,
       userCount: {
-        current: currentUserCount,
-        max: MAX_USERS
+        current: currentUserCount + 1,
+        max: MAX_USERS,
+        remaining: MAX_USERS - currentUserCount - 1
       }
     })
   } catch (error) {

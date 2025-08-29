@@ -191,8 +191,8 @@ export default function AdminDashboard() {
             <div className="flex items-center gap-3">
               <Shield className="h-8 w-8 text-purple-600" />
               <div>
-                <h1 className="text-2xl font-bold">드러커 관리자 대시보드</h1>
-                <p className="text-sm text-gray-600">사용자 관리 시스템</p>
+                <h1 className="text-2xl font-bold">드러커 21 관리자 대시보드</h1>
+                <p className="text-sm text-gray-600">21명 부족 관리 시스템</p>
               </div>
             </div>
             
@@ -236,12 +236,12 @@ export default function AdminDashboard() {
                 <div>
                   <p className="text-sm text-blue-600">일반 사용자</p>
                   <p className="text-2xl font-bold text-blue-700">
-                    {stats.activeUsers}/100
+                    {stats.activeUsers}/20
                   </p>
                   <div className="w-full bg-gray-200 rounded-full h-1 mt-1">
                     <div 
                       className="bg-blue-500 h-1 rounded-full"
-                      style={{ width: `${(stats.activeUsers / 100) * 100}%` }}
+                      style={{ width: `${(stats.activeUsers / 20) * 100}%` }}
                     />
                   </div>
                 </div>
@@ -274,7 +274,7 @@ export default function AdminDashboard() {
                 <div>
                   <p className="text-sm text-red-600">남은 자리</p>
                   <p className="text-2xl font-bold text-red-700">
-                    {100 - stats.activeUsers}
+                    {20 - stats.activeUsers}
                   </p>
                 </div>
                 <AlertCircle className="h-8 w-8 text-red-400" />

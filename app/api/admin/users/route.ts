@@ -47,7 +47,7 @@ export async function GET(request: Request) {
     return NextResponse.json({
       users,
       stats,
-      maxUsers: 100
+      maxUsers: 21
     })
   } catch (error) {
     console.error('Admin API error:', error)

@@ -82,9 +82,16 @@ export default function AuthPage() {
             <CardDescription className="text-center">
               {isLogin 
                 ? '드러커에 오신 것을 환영합니다' 
-                : '크리에이터 여정을 시작하세요'
+                : '드러커 21 - 창업자 포함 21명만 모집합니다'
               }
             </CardDescription>
+            {!isLogin && (
+              <div className="mt-3 text-center">
+                <span className="text-xs bg-black text-white px-3 py-1 rounded-full">
+                  나를 포함 21명 한정
+                </span>
+              </div>
+            )}
           </CardHeader>
 
           <CardContent>

@@ -17,7 +17,7 @@ interface PersonaData {
   name: string
   tagline: string
   
-  // 4가지 핵심 질문 (라이언 인사이트)
+  // 4가지 핵심 질문
   whatICanDo: string[]  // 내가 잘하는 것
   whatILove: string[]   // 내가 좋아하는 것
   whoIWantToTalkTo: string  // 소통하고 싶은 사람들
@@ -208,7 +208,7 @@ export function CreatorPersona({ onPersonaComplete }: CreatorPersonaProps = {}) 
       }
     }
     
-    // 1. 진정성 점수 (Authenticity) - 라이언의 "내가 좋아하는 것과 잘하는 것의 교집합"
+    // 1. 진정성 점수 (Authenticity) - "내가 좋아하는 것과 잘하는 것의 교집합"
     const authenticityScore = () => {
       const loveCount = persona.whatILove?.length || 0
       const skillCount = persona.whatICanDo?.length || 0
@@ -610,7 +610,7 @@ export function CreatorPersona({ onPersonaComplete }: CreatorPersonaProps = {}) 
           <div className="space-y-6">
             <div className="p-4 bg-purple-50 rounded-lg">
               <p className="text-purple-700 text-sm">
-                💡 라이언 인사이트: "첫 단추를 잘 꿰야 합니다. 페르소나가 명확해야 일관된 콘텐츠가 나옵니다."
+                💡 인사이트: "첫 단추를 잘 꿰야 합니다. 페르소나가 명확해야 일관된 콘텐츠가 나옵니다."
               </p>
             </div>
 
@@ -694,11 +694,11 @@ export function CreatorPersona({ onPersonaComplete }: CreatorPersonaProps = {}) 
           </div>
         )}
 
-        {/* Step 2: 핵심 질문 (라이언 4원칙) */}
+        {/* Step 2: 핵심 질문 (4원칙) */}
         {step === 2 && (
           <div className="space-y-6">
             <div className="p-4 bg-blue-50 rounded-lg">
-              <p className="text-blue-700 text-sm font-medium mb-2">🎯 라이언의 4가지 핵심 질문</p>
+              <p className="text-blue-700 text-sm font-medium mb-2">🎯 4가지 핵심 질문</p>
               <p className="text-blue-600 text-xs">
                 "이 질문에 대한 답이 준비되셨다면, 첫 단추를 잘 꿴 거예요"
               </p>

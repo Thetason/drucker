@@ -823,7 +823,46 @@ ${plan.dmKeyword ? `"${plan.dmKeyword}" 댓글 남기고 자료받아가세요!`
                 <div className="p-2 bg-white rounded-lg border border-gray-200">
                   <p className="text-xs text-gray-600">예상 시간</p>
                   <p className="text-sm font-bold text-orange-600">
-                    {Math.ceil(plan.script.length / 150)}분 {Math.round((plan.script.length / 150 % 1) * 60)}초
+                    {(() => {
+                      // 정교한 시간 계산 알고리즘
+                      const text = plan.script
+                      const charCount = text.length
+                      const wordCount = text.split(/\s+/).filter(Boolean).length
+                      const sentenceCount = text.split(/[.!?]+/).filter(Boolean).length
+                      
+                      // 한국어 감지
+                      const koreanChars = (text.match(/[가-힣]/g) || []).length
+                      const isKorean = koreanChars / charCount > 0.3
+                      
+                      let seconds = 0
+                      
+                      if (isKorean) {
+                        // 한국어: 평균 분당 280-320자
+                        const baseSpeed = plan.platform === 'youtube_shorts' ? 350 : 300
+                        seconds = (charCount / baseSpeed) * 60
+                        // 문장 사이 pause (0.3초/문장)
+                        seconds += sentenceCount * 0.3
+                      } else {
+                        // 영어: 평균 분당 140-160단어
+                        const baseSpeed = plan.platform === 'youtube_shorts' ? 170 : 150
+                        seconds = (wordCount / baseSpeed) * 60
+                        // 문장 사이 pause (0.5초/문장)
+                        seconds += sentenceCount * 0.5
+                      }
+                      
+                      // 플랫폼별 템포 조정
+                      if (plan.platform === 'youtube_shorts' || plan.platform === 'instagram_reels') {
+                        seconds *= 0.85 // 숏폼은 15% 빠름
+                      } else if (plan.platform === 'youtube') {
+                        seconds *= 1.05 // 롱폼은 5% 느림
+                      }
+                      
+                      const minutes = Math.floor(seconds / 60)
+                      const remainingSeconds = Math.round(seconds % 60)
+                      
+                      if (minutes === 0) return `${remainingSeconds}초`
+                      return `${minutes}분 ${remainingSeconds}초`
+                    })()}
                   </p>
                 </div>
                 <div className="p-2 bg-white rounded-lg border border-gray-200">

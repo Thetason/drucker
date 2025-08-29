@@ -5,10 +5,10 @@ import {
   Calendar, CheckCircle, Circle, AlertCircle,
   Clock, Bell, Plus, Trash2, Edit, ArrowRight,
   FileText, Play, Film, Camera, Upload, Package,
-  ChevronRight, MoreVertical, Copy, ExternalLink,
+  ChevronRight, ChevronLeft, MoreVertical, Copy, ExternalLink,
   AlertTriangle, Target, Timer, TrendingUp, 
   CheckSquare, XCircle, RefreshCw, BellRing,
-  CalendarClock, Zap, Shield, Award
+  CalendarClock, Zap, Shield, Award, Minus
 } from "lucide-react"
 
 interface Task {
@@ -68,6 +68,8 @@ export function ProductionScheduleV2() {
   const [savedPlans, setSavedPlans] = useState<SavedPlan[]>([])
   const [draggedPlan, setDraggedPlan] = useState<SavedPlan | null>(null)
   const [showPlanLibrary, setShowPlanLibrary] = useState(true)
+  const [libraryWidth, setLibraryWidth] = useState(3) // 1-6 grid columns
+  const [isResizing, setIsResizing] = useState(false)
   const [viewMode, setViewMode] = useState<'list' | 'timeline' | 'kanban'>('list')
   const [filterStage, setFilterStage] = useState<'all' | Task['stage']>('all')
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
@@ -450,19 +452,49 @@ export function ProductionScheduleV2() {
 
       <div className="grid grid-cols-12 gap-6">
         {/* Left Side - Saved Plans Library */}
-        <div className={`${showPlanLibrary ? 'col-span-3' : 'col-span-1'} transition-all`}>
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+        <div className={`${
+          !showPlanLibrary ? 'col-span-1' :
+          libraryWidth === 2 ? 'col-span-2' :
+          libraryWidth === 3 ? 'col-span-3' :
+          libraryWidth === 4 ? 'col-span-4' :
+          libraryWidth === 5 ? 'col-span-5' :
+          'col-span-6'
+        } transition-all relative`}>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 h-full">
             <div className="p-4 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <h3 className={`font-medium ${!showPlanLibrary && 'hidden'}`}>
                   기획서 라이브러리
                 </h3>
-                <button
-                  onClick={() => setShowPlanLibrary(!showPlanLibrary)}
-                  className="p-1 hover:bg-gray-100 rounded"
-                >
-                  {showPlanLibrary ? '←' : '→'}
-                </button>
+                <div className="flex items-center gap-1">
+                  {showPlanLibrary && (
+                    <>
+                      <button
+                        onClick={() => setLibraryWidth(Math.max(2, libraryWidth - 1))}
+                        disabled={libraryWidth <= 2}
+                        className="p-1 hover:bg-gray-100 rounded disabled:opacity-50"
+                        title="축소"
+                      >
+                        <Minus className="h-3 w-3" />
+                      </button>
+                      <span className="text-xs text-gray-500 px-1">{libraryWidth}/6</span>
+                      <button
+                        onClick={() => setLibraryWidth(Math.min(6, libraryWidth + 1))}
+                        disabled={libraryWidth >= 6}
+                        className="p-1 hover:bg-gray-100 rounded disabled:opacity-50"
+                        title="확대"
+                      >
+                        <Plus className="h-3 w-3" />
+                      </button>
+                    </>
+                  )}
+                  <button
+                    onClick={() => setShowPlanLibrary(!showPlanLibrary)}
+                    className="p-1 hover:bg-gray-100 rounded"
+                  >
+                    {showPlanLibrary ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
             </div>
             
@@ -504,7 +536,14 @@ export function ProductionScheduleV2() {
         </div>
 
         {/* Right Side - Schedule */}
-        <div className={`${showPlanLibrary ? 'col-span-9' : 'col-span-11'} space-y-6`}>
+        <div className={`${
+          !showPlanLibrary ? 'col-span-11' :
+          libraryWidth === 2 ? 'col-span-10' :
+          libraryWidth === 3 ? 'col-span-9' :
+          libraryWidth === 4 ? 'col-span-8' :
+          libraryWidth === 5 ? 'col-span-7' :
+          'col-span-6'
+        } space-y-6`}>
           {/* Drop Zone for Plans */}
           <div 
             onDragOver={handleDragOver}

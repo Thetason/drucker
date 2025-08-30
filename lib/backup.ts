@@ -79,13 +79,13 @@ export class DataBackupManager {
       }
 
       // 데이터 복원
-      if (backup.persona) {
+      if (backup && backup.persona) {
         localStorage.setItem('drucker-persona', JSON.stringify(backup.persona))
       }
-      if (backup.plans) {
+      if (backup && backup.plans) {
         localStorage.setItem('drucker-plans', JSON.stringify(backup.plans))
       }
-      if (backup.tasks) {
+      if (backup && backup.tasks) {
         localStorage.setItem('drucker-tasks', JSON.stringify(backup.tasks))
       }
 

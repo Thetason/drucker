@@ -569,65 +569,71 @@ export function ProductionScheduleV2() {
               <Plus className="h-4 w-4" />
               새 작업 추가
             </h3>
-            <div className="grid grid-cols-2 gap-3">
-              <input
-                placeholder="콘텐츠 제목"
-                value={newTask.title}
-                onChange={(e) => setNewTask({...newTask, title: e.target.value})}
-                className="px-3 py-2 border rounded-md focus:border-blue-500 focus:outline-none"
-              />
-              <select
-                value={newTask.stage}
-                onChange={(e) => setNewTask({...newTask, stage: e.target.value as Task["stage"]})}
-                className="px-3 py-2 border rounded-md focus:border-blue-500 focus:outline-none"
-              >
-                {Object.entries(stages).filter(([key]) => key !== "complete").map(([key, stage]) => (
-                  <option key={key} value={key}>{stage.label}</option>
-                ))}
-              </select>
-              
-              <div className="flex gap-2">
+            <div className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <input
-                  type="date"
-                  value={newTask.dueDate}
-                  onChange={(e) => setNewTask({...newTask, dueDate: e.target.value})}
-                  className="flex-1 px-3 py-2 border rounded-md focus:border-blue-500 focus:outline-none"
+                  placeholder="콘텐츠 제목"
+                  value={newTask.title}
+                  onChange={(e) => setNewTask({...newTask, title: e.target.value})}
+                  className="px-3 py-2 border rounded-md focus:border-blue-500 focus:outline-none w-full"
                 />
-                <input
-                  type="time"
-                  value={newTask.dueTime}
-                  onChange={(e) => setNewTask({...newTask, dueTime: e.target.value})}
-                  className="px-3 py-2 border rounded-md focus:border-blue-500 focus:outline-none"
-                />
+                <select
+                  value={newTask.stage}
+                  onChange={(e) => setNewTask({...newTask, stage: e.target.value as Task["stage"]})}
+                  className="px-3 py-2 border rounded-md focus:border-blue-500 focus:outline-none w-full"
+                >
+                  {Object.entries(stages).filter(([key]) => key !== "complete").map(([key, stage]) => (
+                    <option key={key} value={key}>{stage.label}</option>
+                  ))}
+                </select>
               </div>
               
-              <select
-                value={newTask.priority}
-                onChange={(e) => setNewTask({...newTask, priority: e.target.value as Task["priority"]})}
-                className="px-3 py-2 border rounded-md focus:border-blue-500 focus:outline-none"
-              >
-                {Object.entries(priorityConfig).map(([key, config]) => (
-                  <option key={key} value={key}>{config.icon} {config.label}</option>
-                ))}
-              </select>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="flex gap-2">
+                  <input
+                    type="date"
+                    value={newTask.dueDate}
+                    onChange={(e) => setNewTask({...newTask, dueDate: e.target.value})}
+                    className="flex-1 px-3 py-2 border rounded-md focus:border-blue-500 focus:outline-none"
+                  />
+                  <input
+                    type="time"
+                    value={newTask.dueTime}
+                    onChange={(e) => setNewTask({...newTask, dueTime: e.target.value})}
+                    className="px-3 py-2 border rounded-md focus:border-blue-500 focus:outline-none"
+                  />
+                </div>
+                
+                <select
+                  value={newTask.priority}
+                  onChange={(e) => setNewTask({...newTask, priority: e.target.value as Task["priority"]})}
+                  className="px-3 py-2 border rounded-md focus:border-blue-500 focus:outline-none w-full"
+                >
+                  {Object.entries(priorityConfig).map(([key, config]) => (
+                    <option key={key} value={key}>{config.icon} {config.label}</option>
+                  ))}
+                </select>
+              </div>
               
-              <select
-                value={newTask.reminderTime}
-                onChange={(e) => setNewTask({...newTask, reminderTime: e.target.value as Task["reminderTime"]})}
-                className="px-3 py-2 border rounded-md focus:border-blue-500 focus:outline-none"
-              >
-                <option value="">알림 설정</option>
-                {Object.entries(reminderOptions).map(([key, label]) => (
-                  <option key={key} value={key}>🔔 {label} 알림</option>
-                ))}
-              </select>
-              
-              <input
-                placeholder="메모 (선택사항)"
-                value={newTask.notes}
-                onChange={(e) => setNewTask({...newTask, notes: e.target.value})}
-                className="px-3 py-2 border rounded-md focus:border-blue-500 focus:outline-none"
-              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <select
+                  value={newTask.reminderTime}
+                  onChange={(e) => setNewTask({...newTask, reminderTime: e.target.value as Task["reminderTime"]})}
+                  className="px-3 py-2 border rounded-md focus:border-blue-500 focus:outline-none w-full"
+                >
+                  <option value="">알림 설정</option>
+                  {Object.entries(reminderOptions).map(([key, label]) => (
+                    <option key={key} value={key}>🔔 {label} 알림</option>
+                  ))}
+                </select>
+                
+                <input
+                  placeholder="메모 (선택사항)"
+                  value={newTask.notes}
+                  onChange={(e) => setNewTask({...newTask, notes: e.target.value})}
+                  className="px-3 py-2 border rounded-md focus:border-blue-500 focus:outline-none w-full"
+                />
+              </div>
             </div>
             <button
               onClick={addTask}

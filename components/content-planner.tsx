@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -63,6 +63,7 @@ export function ContentPlanner() {
   const [currentStep, setCurrentStep] = useState<'package' | 'story' | 'retention' | 'review'>('package')
   const [showInspiration, setShowInspiration] = useState(true)
   const [savedPlans, setSavedPlans] = useState<any[]>([])
+  const [editingPlanId, setEditingPlanId] = useState<string | null>(null)
   const [plan, setPlan] = useState<any>({
     // 패키징
     titles: ["", "", "", "", ""],
@@ -194,6 +195,125 @@ export function ContentPlanner() {
     "2024": ["MZ", "갓생", "부업", "AI", "힐링", "미니멀", "루틴", "꿀팁"],
     "유튜브": ["첫공개", "TMI", "Q&A", "챌린지", "브이로그", "하울", "루틴"],
     "릴스": ["POV", "GRWM", "transition", "aesthetic", "relatable", "storytime"]
+  }
+
+  // Load saved plans from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('drucker-plans')
+    if (saved) {
+      try {
+        const plans = JSON.parse(saved)
+        setSavedPlans(plans)
+      } catch (error) {
+        console.error('Failed to load saved plans:', error)
+      }
+    }
+
+    // Check if there's a plan to open from production schedule
+    const openPlanId = localStorage.getItem('drucker-open-plan')
+    if (openPlanId) {
+      const saved = localStorage.getItem('drucker-plans')
+      if (saved) {
+        const plans = JSON.parse(saved)
+        const planToOpen = plans.find((p: any) => p.id === openPlanId)
+        if (planToOpen) {
+          setPlan(planToOpen)
+          setEditingPlanId(openPlanId)
+        }
+      }
+      localStorage.removeItem('drucker-open-plan')
+    }
+  }, [])
+
+  // Save plans to localStorage whenever they change
+  useEffect(() => {
+    if (savedPlans.length > 0) {
+      localStorage.setItem('drucker-plans', JSON.stringify(savedPlans))
+    }
+  }, [savedPlans])
+
+  const savePlan = () => {
+    if (!plan.title) {
+      alert("콘텐츠 제목을 입력해주세요!")
+      return
+    }
+
+    const planToSave = {
+      ...plan,
+      id: editingPlanId || Date.now().toString(),
+      goal: plan.goal || `${plan.platform} 콘텐츠 제작`,
+      target: plan.targetAudience || '타겟 미설정',
+      updatedAt: new Date().toISOString()
+    }
+
+    if (editingPlanId) {
+      // Update existing plan
+      setSavedPlans(savedPlans.map(p => p.id === editingPlanId ? planToSave : p))
+      alert("기획서가 수정되었습니다!")
+      setEditingPlanId(null)
+    } else {
+      // Add new plan
+      setSavedPlans([...savedPlans, planToSave])
+      alert("기획서가 저장되었습니다!")
+    }
+
+    // Reset form
+    setPlan({
+      titles: ["", "", "", "", ""],
+      selectedTitle: 0,
+      thumbnailConcepts: ["", "", ""],
+      shortHook: "",
+      goal: "",
+      targetSituation: "",
+      promise: "",
+      diagnosis: "",
+      solution: "",
+      result: "",
+      evidence: "",
+      retentionMarkers: {
+        sec15: "",
+        sec45: "",
+        sec90: ""
+      },
+      cta: "",
+      dmKeyword: "",
+      platform: "youtube",
+      contentMix: {
+        help: 60,
+        hub: 30,
+        hero: 10
+      },
+      checklist: {
+        packageFirst: false,
+        promiseMatch: false,
+        retentionPlan: false,
+        evidenceIncluded: false,
+        ctaClear: false
+      },
+      title: "",
+      targetAudience: "",
+      hook: "",
+      mainContent: ["", "", ""],
+      keywords: [],
+      duration: "10분"
+    })
+  }
+
+  const loadPlanForEdit = (planId: string) => {
+    const planToEdit = savedPlans.find(p => p.id === planId)
+    if (planToEdit) {
+      setPlan(planToEdit)
+      setEditingPlanId(planId)
+    }
+  }
+
+  const deletePlan = (planId: string) => {
+    if (confirm('이 기획서를 삭제하시겠습니까?')) {
+      setSavedPlans(savedPlans.filter(p => p.id !== planId))
+      if (planId === editingPlanId) {
+        setEditingPlanId(null)
+      }
+    }
   }
 
   return (
@@ -540,27 +660,9 @@ export function ContentPlanner() {
         <div className="flex gap-2">
           <Button 
             className="flex-1"
-            onClick={() => {
-              if (!plan.title) {
-                alert("콘텐츠 제목을 입력해주세요!")
-                return
-              }
-              setSavedPlans([...savedPlans, {...plan, id: Date.now().toString()}])
-              alert("기획서가 저장되었습니다!")
-              // 초기화
-              setPlan({
-                title: "",
-                platform: "youtube",
-                duration: "10분",
-                targetAudience: "",
-                hook: "",
-                mainContent: ["", "", ""],
-                cta: "",
-                keywords: []
-              })
-            }}
+            onClick={savePlan}
           >
-            기획서 저장
+            {editingPlanId ? '기획서 수정' : '기획서 저장'}
           </Button>
           <Button 
             variant="outline" 
@@ -581,6 +683,39 @@ export function ContentPlanner() {
             초기화
           </Button>
         </div>
+
+        {/* Saved Plans List */}
+        {savedPlans.length > 0 && (
+          <div className="mt-6 pt-6 border-t">
+            <h3 className="text-sm font-medium mb-3">저장된 기획서</h3>
+            <div className="space-y-2">
+              {savedPlans.map((savedPlan) => (
+                <div key={savedPlan.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                  <div className="flex-1">
+                    <p className="font-medium text-sm">{savedPlan.title}</p>
+                    <p className="text-xs text-gray-500">
+                      {savedPlan.platform} | {savedPlan.targetAudience || '타겟 미설정'}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => loadPlanForEdit(savedPlan.id)}
+                      className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+                    >
+                      수정
+                    </button>
+                    <button
+                      onClick={() => deletePlan(savedPlan.id)}
+                      className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
+                    >
+                      삭제
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   )

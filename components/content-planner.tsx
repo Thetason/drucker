@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { plansAPI } from "@/lib/api-client"
 import { 
   Package, Target, TrendingUp, Clock, 
   Eye, ThumbsUp, MessageCircle, Share2,
@@ -197,42 +198,54 @@ export function ContentPlanner() {
     "릴스": ["POV", "GRWM", "transition", "aesthetic", "relatable", "storytime"]
   }
 
-  // Load saved plans from localStorage on mount
+  // Load saved plans from DB and localStorage on mount
   useEffect(() => {
-    const saved = localStorage.getItem('drucker-plans')
-    if (saved) {
-      try {
-        const plans = JSON.parse(saved)
-        setSavedPlans(plans)
-      } catch (error) {
-        console.error('Failed to load saved plans:', error)
-      }
-    }
-
-    // Check if there's a plan to open from production schedule
-    const openPlanId = localStorage.getItem('drucker-open-plan')
-    if (openPlanId) {
-      const saved = localStorage.getItem('drucker-plans')
-      if (saved) {
-        const plans = JSON.parse(saved)
-        const planToOpen = plans.find((p: any) => p.id === openPlanId)
-        if (planToOpen) {
-          setPlan(planToOpen)
-          setEditingPlanId(openPlanId)
+    const loadPlans = async () => {
+      // DB에서 먼저 시도
+      const dbPlans = await plansAPI.getAll()
+      if (dbPlans && dbPlans.length > 0) {
+        setSavedPlans(dbPlans)
+      } else {
+        // DB에 없으면 localStorage에서 복구
+        const saved = localStorage.getItem('drucker-plans')
+        if (saved) {
+          try {
+            const plans = JSON.parse(saved)
+            setSavedPlans(plans)
+            // DB에 저장 시도
+            plans.forEach((plan: any) => plansAPI.create(plan))
+          } catch (error) {
+            console.error('Failed to load saved plans:', error)
+          }
         }
       }
-      localStorage.removeItem('drucker-open-plan')
+
+      // Check if there's a plan to open from production schedule
+      const openPlanId = localStorage.getItem('drucker-open-plan')
+      if (openPlanId) {
+        const saved = localStorage.getItem('drucker-plans')
+        if (saved) {
+          const plans = JSON.parse(saved)
+          const planToOpen = plans.find((p: any) => p.id === openPlanId)
+          if (planToOpen) {
+            setPlan(planToOpen)
+            setEditingPlanId(openPlanId)
+          }
+        }
+        localStorage.removeItem('drucker-open-plan')
+      }
     }
+    loadPlans()
   }, [])
 
-  // Save plans to localStorage whenever they change
+  // Save plans to localStorage whenever they change (backup)
   useEffect(() => {
     if (savedPlans.length > 0) {
       localStorage.setItem('drucker-plans', JSON.stringify(savedPlans))
     }
   }, [savedPlans])
 
-  const savePlan = () => {
+  const savePlan = async () => {
     if (!plan.title) {
       alert("콘텐츠 제목을 입력해주세요!")
       return
@@ -248,12 +261,14 @@ export function ContentPlanner() {
 
     if (editingPlanId) {
       // Update existing plan
-      setSavedPlans(savedPlans.map(p => p.id === editingPlanId ? planToSave : p))
+      const updated = await plansAPI.update(planToSave)
+      setSavedPlans(savedPlans.map(p => p.id === editingPlanId ? (updated || planToSave) : p))
       alert("기획서가 수정되었습니다!")
       setEditingPlanId(null)
     } else {
       // Add new plan
-      setSavedPlans([...savedPlans, planToSave])
+      const created = await plansAPI.create(planToSave)
+      setSavedPlans([...savedPlans, created || planToSave])
       alert("기획서가 저장되었습니다!")
     }
 
@@ -307,8 +322,9 @@ export function ContentPlanner() {
     }
   }
 
-  const deletePlan = (planId: string) => {
+  const deletePlan = async (planId: string) => {
     if (confirm('이 기획서를 삭제하시겠습니까?')) {
+      await plansAPI.delete(planId)
       setSavedPlans(savedPlans.filter(p => p.id !== planId))
       if (planId === editingPlanId) {
         setEditingPlanId(null)

@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>드러커 데이터 복구 도구</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #3b82f6;
+            padding-bottom: 10px;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        .data-display {
+            background: #f1f3f5;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .success {
+            color: #10b981;
+            font-weight: bold;
+        }
+        .error {
+            color: #ef4444;
+            font-weight: bold;
+        }
+        .backup-area {
+            width: 100%;
+            height: 200px;
+            font-family: monospace;
+            font-size: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 드러커 데이터 복구 및 백업 도구</h1>
+        
+        <div class="section">
+            <h2>📊 현재 저장된 데이터 확인</h2>
+            <button onclick="checkData()">데이터 확인</button>
+            <div id="currentData" class="data-display"></div>
+        </div>
+
+        <div class="section">
+            <h2>💾 데이터 백업 (내보내기)</h2>
+            <button onclick="exportData()">모든 데이터 내보내기</button>
+            <textarea id="exportArea" class="backup-area" placeholder="내보낸 데이터가 여기에 표시됩니다..."></textarea>
+            <button onclick="copyToClipboard()">클립보드에 복사</button>
+        </div>
+
+        <div class="section">
+            <h2>📥 데이터 복원 (가져오기)</h2>
+            <textarea id="importArea" class="backup-area" placeholder="복원할 데이터를 여기에 붙여넣으세요..."></textarea>
+            <button onclick="importData()">데이터 복원</button>
+            <div id="importResult"></div>
+        </div>
+
+        <div class="section">
+            <h2>🆘 샘플 데이터 생성</h2>
+            <p>테스트용 샘플 데이터를 생성합니다.</p>
+            <button onclick="createSampleData()">샘플 페르소나 생성</button>
+            <button onclick="createSamplePlans()">샘플 기획서 생성</button>
+        </div>
+    </div>
+
+    <script>
+        // 데이터 확인
+        function checkData() {
+            const display = document.getElementById('currentData');
+            let html = '<h3>저장된 데이터:</h3>';
+            
+            // 페르소나 데이터
+            const persona = localStorage.getItem('drucker-persona');
+            if (persona) {
+                const data = JSON.parse(persona);
+                html += '<div><strong>페르소나:</strong> ' + (data.name || '이름 없음') + '</div>';
+            } else {
+                html += '<div class="error">페르소나 데이터 없음</div>';
+            }
+            
+            // 기획서 데이터
+            const plans = localStorage.getItem('drucker-plans');
+            if (plans) {
+                const data = JSON.parse(plans);
+                html += '<div><strong>기획서:</strong> ' + data.length + '개</div>';
+                data.forEach(plan => {
+                    html += '<div style="margin-left: 20px;">- ' + plan.title + '</div>';
+                });
+            } else {
+                html += '<div class="error">기획서 데이터 없음</div>';
+            }
+            
+            // 작업 데이터
+            const tasks = localStorage.getItem('drucker-tasks');
+            if (tasks) {
+                const data = JSON.parse(tasks);
+                html += '<div><strong>작업:</strong> ' + data.length + '개</div>';
+            } else {
+                html += '<div class="error">작업 데이터 없음</div>';
+            }
+            
+            display.innerHTML = html;
+        }
+
+        // 데이터 내보내기
+        function exportData() {
+            const data = {
+                persona: localStorage.getItem('drucker-persona'),
+                plans: localStorage.getItem('drucker-plans'),
+                tasks: localStorage.getItem('drucker-tasks'),
+                exportDate: new Date().toISOString()
+            };
+            
+            const jsonStr = JSON.stringify(data, null, 2);
+            document.getElementById('exportArea').value = jsonStr;
+        }
+
+        // 클립보드 복사
+        function copyToClipboard() {
+            const textarea = document.getElementById('exportArea');
+            textarea.select();
+            document.execCommand('copy');
+            alert('클립보드에 복사되었습니다!');
+        }
+
+        // 데이터 가져오기
+        function importData() {
+            const importArea = document.getElementById('importArea');
+            const resultDiv = document.getElementById('importResult');
+            
+            try {
+                const data = JSON.parse(importArea.value);
+                
+                if (data.persona) {
+                    localStorage.setItem('drucker-persona', data.persona);
+                }
+                if (data.plans) {
+                    localStorage.setItem('drucker-plans', data.plans);
+                }
+                if (data.tasks) {
+                    localStorage.setItem('drucker-tasks', data.tasks);
+                }
+                
+                resultDiv.innerHTML = '<div class="success">✅ 데이터가 성공적으로 복원되었습니다!</div>';
+                checkData();
+            } catch (error) {
+                resultDiv.innerHTML = '<div class="error">❌ 오류: ' + error.message + '</div>';
+            }
+        }
+
+        // 샘플 페르소나 생성
+        function createSampleData() {
+            const samplePersona = {
+                name: "김크리에이터",
+                whatICanDo: ["영상 편집", "스토리텔링", "콘텐츠 기획"],
+                whatILove: ["여행", "맛집 탐방", "새로운 경험"],
+                expertise: ["라이프스타일", "여행", "푸드"],
+                primaryPlatform: ["youtube", "instagram"],
+                audience: {
+                    ageRange: "20-35",
+                    interests: ["여행", "맛집", "일상", "자기계발"],
+                    painPoints: ["일상의 지루함", "새로운 경험 부족", "여행 정보 부족"]
+                },
+                contentTopics: ["국내 여행 꿀팁", "숨은 맛집 소개", "일상 브이로그"],
+                personality: ["친근한", "유머러스한", "진정성 있는"],
+                goal: "구독자 10만 달성",
+                monetizationPlan: ["유튜브 광고", "브랜드 협찬", "온라인 클래스"],
+                createdAt: new Date().toISOString()
+            };
+            
+            localStorage.setItem('drucker-persona', JSON.stringify(samplePersona));
+            alert('샘플 페르소나가 생성되었습니다!');
+            checkData();
+        }
+
+        // 샘플 기획서 생성
+        function createSamplePlans() {
+            const samplePlans = [
+                {
+                    id: Date.now().toString(),
+                    title: "서울 숨은 맛집 TOP 10",
+                    platform: "youtube",
+                    duration: "15분",
+                    targetAudience: "20-30대 맛집 매니아",
+                    hook: "서울 토박이도 모르는 진짜 맛집",
+                    mainContent: ["맛집 리스트 소개", "각 맛집 특징과 메뉴", "방문 팁"],
+                    cta: "구독과 좋아요, 댓글로 추천 맛집 알려주세요!",
+                    keywords: ["서울맛집", "숨은맛집", "맛집추천"],
+                    goal: "조회수 10만회",
+                    target: "맛집 탐방을 좋아하는 2030",
+                    updatedAt: new Date().toISOString()
+                },
+                {
+                    id: (Date.now() + 1).toString(),
+                    title: "혼자 떠나는 제주도 3박 4일",
+                    platform: "youtube",
+                    duration: "20분",
+                    targetAudience: "혼자 여행을 계획하는 사람들",
+                    hook: "혼자여도 외롭지 않은 제주 여행법",
+                    mainContent: ["일정 소개", "숙소와 이동 팁", "혼자 가기 좋은 스팟"],
+                    cta: "더 많은 여행 팁을 원하시면 구독해주세요!",
+                    keywords: ["제주여행", "혼자여행", "국내여행"],
+                    goal: "구독자 전환율 10%",
+                    target: "혼자 여행에 관심있는 2030",
+                    updatedAt: new Date().toISOString()
+                }
+            ];
+            
+            localStorage.setItem('drucker-plans', JSON.stringify(samplePlans));
+            alert('샘플 기획서 2개가 생성되었습니다!');
+            checkData();
+        }
+
+        // 페이지 로드 시 데이터 확인
+        window.onload = function() {
+            checkData();
+        };
+    </script>
+</body>
+</html>

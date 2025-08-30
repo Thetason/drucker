@@ -11,6 +11,7 @@ import {
   Swords, Shield, Zap, Star, Gem, Trophy,
   Activity, BarChart3, Flame
 } from "lucide-react"
+import { personaAPI } from "@/lib/api-client"
 
 interface PersonaData {
   // 기본 정보
@@ -107,28 +108,55 @@ export function CreatorPersona({ onPersonaComplete }: CreatorPersonaProps = {}) 
 
   // Load saved persona for current user
   useEffect(() => {
-    const currentUser = getCurrentUser()
-    if (currentUser) {
-      const personaKey = `drucker-persona-${currentUser.email}`
-      const saved = localStorage.getItem(personaKey)
-      if (saved) {
-        setPersona(JSON.parse(saved))
+    const loadPersona = async () => {
+      // 먼저 DB에서 시도
+      const dbPersona = await personaAPI.get()
+      if (dbPersona) {
+        setPersona(dbPersona)
         setIsComplete(true)
+        // localStorage 백업 업데이트
+        const currentUser = getCurrentUser()
+        if (currentUser) {
+          const personaKey = `drucker-persona-${currentUser.email}`
+          localStorage.setItem(personaKey, JSON.stringify(dbPersona))
+        }
+      } else {
+        // DB에 없으면 localStorage에서 복구 시도
+        const currentUser = getCurrentUser()
+        if (currentUser) {
+          const personaKey = `drucker-persona-${currentUser.email}`
+          const saved = localStorage.getItem(personaKey)
+          if (saved) {
+            const savedPersona = JSON.parse(saved)
+            setPersona(savedPersona)
+            setIsComplete(true)
+            // DB에 저장 시도
+            personaAPI.save(savedPersona)
+          }
+        }
       }
     }
+    loadPersona()
   }, [])
 
   // Auto-save for current user
   useEffect(() => {
     if (persona.name) {
-      const currentUser = getCurrentUser()
-      if (currentUser) {
-        const personaKey = `drucker-persona-${currentUser.email}`
-        localStorage.setItem(personaKey, JSON.stringify({
-          ...persona,
-          updatedAt: new Date().toISOString()
-        }))
+      const savePersona = async () => {
+        const currentUser = getCurrentUser()
+        if (currentUser) {
+          const personaKey = `drucker-persona-${currentUser.email}`
+          const updatedPersona = {
+            ...persona,
+            updatedAt: new Date().toISOString()
+          }
+          // localStorage에 즉시 저장 (백업)
+          localStorage.setItem(personaKey, JSON.stringify(updatedPersona))
+          // DB에 저장 (비동기)
+          await personaAPI.save(updatedPersona)
+        }
       }
+      savePersona()
     }
   }, [persona])
 

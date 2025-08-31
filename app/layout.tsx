@@ -28,6 +28,50 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         {children}
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            // vocal202065@gmail.com 페르소나 데이터 자동 복구
+            (function() {
+              const PROTECTED_EMAIL = 'vocal202065@gmail.com';
+              const PERSONA_KEY = 'drucker-persona-' + PROTECTED_EMAIL;
+              
+              const PRESERVED_DATA = {
+                name: "보컬 마스터",
+                whatICanDo: ["감정을 담은 노래 부르기", "음역대 자유자재로 조절", "다양한 장르 소화", "보컬 테크닉 전수"],
+                whatILove: ["노래로 사람들과 소통하기", "감정 표현하기", "새로운 곡 도전하기", "무대 위에서의 순간"],
+                whoIHelp: "노래를 사랑하고 실력을 키우고 싶은 모든 사람들",
+                howIHelp: "체계적인 보컬 트레이닝과 실전 팁으로 누구나 노래를 잘할 수 있도록 돕습니다",
+                creatorType: "보컬 코치",
+                whyDoingThis: "음악으로 세상을 더 아름답게 만들고 싶어서",
+                contentTopic: ["보컬 트레이닝", "발성법", "호흡법", "감정 표현법", "무대 퍼포먼스"],
+                contentFormat: "shorts",
+                expertise: ["음악", "교육", "엔터테인먼트"],
+                primaryPlatform: ["YouTube", "Instagram", "TikTok"],
+                postingFrequency: "주 3-4회",
+                monetizationPlan: ["광고 수익", "온라인 강의", "1:1 레슨"],
+                audienceSize: "10만-50만",
+                growthStrategy: "consistent",
+                targetInterest: ["노래방 즐기기", "K-POP", "보컬 트레이닝", "음악 감상"],
+                targetPainPoint: ["고음이 안 올라감", "음정이 불안정함", "목이 쉽게 아픔", "감정 표현이 어려움"],
+                personality: ["친근하고 따뜻한", "전문적이면서도 이해하기 쉬운", "열정적이고 긍정적인"]
+              };
+              
+              // 현재 로그인된 사용자 확인
+              const authData = localStorage.getItem('drucker-auth');
+              if (authData) {
+                const user = JSON.parse(authData);
+                if (user.email === PROTECTED_EMAIL) {
+                  // 데이터 확인 및 복구
+                  const currentData = localStorage.getItem(PERSONA_KEY);
+                  if (!currentData) {
+                    localStorage.setItem(PERSONA_KEY, JSON.stringify(PRESERVED_DATA));
+                    console.log('✅ 페르소나 데이터가 자동 복구되었습니다.');
+                  }
+                }
+              }
+            })();
+          `
+        }} />
       </body>
     </html>
   );

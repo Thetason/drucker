@@ -6,7 +6,7 @@ import { ProductionScheduleV2 } from "@/components/production-schedule-v2"
 import { CreatorPersona } from "@/components/creator-persona"
 import { 
   Target, Lightbulb, 
-  Calendar,
+  Calendar, BookOpen, CalendarDays,
   User, CheckCircle2, AlertCircle, LogOut
 } from "lucide-react"
 import Link from "next/link"
@@ -91,6 +91,22 @@ export default function HomePage() {
               <p className="text-sm text-muted-foreground">
                 콘텐츠 기획 & 제작 관리
               </p>
+            </div>
+            
+            {/* Quick Links */}
+            <div className="flex items-center gap-2">
+              <Link href="/library">
+                <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                  <BookOpen className="h-4 w-4" />
+                  <span className="hidden md:inline">라이브러리</span>
+                </Button>
+              </Link>
+              <Link href="/schedule">
+                <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                  <CalendarDays className="h-4 w-4" />
+                  <span className="hidden md:inline">캘린더</span>
+                </Button>
+              </Link>
             </div>
             
             {/* User Section */}

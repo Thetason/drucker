@@ -444,27 +444,36 @@ export function ContentPlannerWithInsights() {
               </div>
               
               {/* Action Buttons */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-end gap-3">
                 <button
                   onClick={newPlan}
-                  className="px-3 py-1.5 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors text-sm"
+                  className="flex flex-col items-center gap-1 px-3 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors text-xs text-gray-600"
+                  aria-label="새 기획서"
                 >
                   <Plus className="h-4 w-4" />
+                  <span>새 기획</span>
                 </button>
                 <button
                   onClick={() => setShowSaved(!showSaved)}
-                  className="px-3 py-1.5 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors text-sm"
+                  className="flex flex-col items-center gap-1 px-3 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors text-xs text-gray-600"
+                  aria-label="저장된 기획서 보기"
                 >
                   <BookOpen className="h-4 w-4" />
+                  <span>기획서</span>
                 </button>
                 <button
                   onClick={exportPlan}
-                  className="px-3 py-1.5 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors text-sm"
+                  className="flex flex-col items-center gap-1 px-3 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors text-xs text-gray-600"
+                  aria-label="기획서 내보내기"
                 >
                   <Download className="h-4 w-4" />
+                  <span>내보내기</span>
                 </button>
-                <label className="px-3 py-1.5 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer text-sm">
+                <label className="flex flex-col items-center gap-1 px-3 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer text-xs text-gray-600"
+                  aria-label="기획서 불러오기"
+                >
                   <Upload className="h-4 w-4" />
+                  <span>불러오기</span>
                   <input type="file" accept=".json" onChange={importPlan} className="hidden" />
                 </label>
               </div>

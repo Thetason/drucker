@@ -46,79 +46,6 @@ interface ContentPlan {
 const DEFAULT_THUMBNAIL = '/api/placeholder/400/225'
 const DEFAULT_RESOURCES = ['기획', '촬영', '편집']
 
-const SAMPLE_PLANS: ContentPlan[] = [
-  {
-    id: 'sample-1',
-    title: '노래로 자신의 감정을 자유롭게 표현하고 듣는 사람에게 감동을 줄 수 있게 될 거예요',
-    thumbnail: DEFAULT_THUMBNAIL,
-    packaging: {
-      title: '10분만에 노래 실력 늘리는 방법',
-      thumbnail: DEFAULT_THUMBNAIL,
-      hook: '프로 가수들이 숨겨온 연습법 공개'
-    },
-    target: {
-      audience: '노래를 좋아하는 20-30대',
-      painPoints: ['노래 실력이 늘지 않음', '고음이 안 올라감'],
-      desires: ['노래방 스타되기', '감정 표현 잘하기']
-    },
-    content: {
-      structure: '도입 → 문제 제기 → 해결책 → 실습 → 마무리',
-      keyPoints: ['호흡법', '발성법', '감정 표현'],
-      cta: '구독하고 더 많은 팁 받기'
-    },
-    production: {
-      duration: '3일',
-      resources: ['카메라', '마이크', '조명'],
-      deadline: '2025.09.05'
-    },
-    metrics: {
-      expectedViews: '10K+',
-      expectedEngagement: '15%',
-      successMetrics: ['조회수 1만 이상', '좋아요 1천 이상']
-    },
-    createdAt: '2025-08-31',
-    updatedAt: '2025-08-31',
-    status: 'draft',
-    platform: 'YouTube',
-    source: 'sample'
-  },
-  {
-    id: 'sample-2',
-    title: 'AI 도구 활용법 - 업무 생산성 2배 높이기',
-    thumbnail: DEFAULT_THUMBNAIL,
-    packaging: {
-      title: 'ChatGPT로 일 잘하는 직장인 되기',
-      thumbnail: DEFAULT_THUMBNAIL,
-      hook: '월급은 그대로인데 일은 반으로 줄이는 방법'
-    },
-    target: {
-      audience: '20-40대 직장인',
-      painPoints: ['반복 업무 스트레스', '야근 지옥'],
-      desires: ['워라밸', '연봉 상승']
-    },
-    content: {
-      structure: '문제 상황 → AI 도구 소개 → 실제 활용 사례 → 팁',
-      keyPoints: ['ChatGPT 활용법', '자동화 도구', '프롬프트 작성법'],
-      cta: '더 많은 AI 활용법 보러가기'
-    },
-    production: {
-      duration: '2일',
-      resources: ['화면 녹화 프로그램', '편집 툴'],
-      deadline: '2025.09.03'
-    },
-    metrics: {
-      expectedViews: '50K+',
-      expectedEngagement: '20%',
-      successMetrics: ['조회수 5만 이상', '저장 5천 이상']
-    },
-    createdAt: '2025-08-30',
-    updatedAt: '2025-08-30',
-    status: 'in_production',
-    platform: 'Instagram',
-    source: 'sample'
-  }
-]
-
 const mapPlatformLabel = (platform?: string) => {
   switch (platform) {
     case 'youtube':
@@ -268,12 +195,7 @@ export default function LibraryPage() {
         }
       }
 
-      const combined = userPlans.length > 0
-        ? [...userPlans, ...SAMPLE_PLANS]
-        : SAMPLE_PLANS
-
-      // 기존 사용자 기획서는 유지하면서 샘플 데이터를 보조로 제공
-      setPlans(combined)
+      setPlans(userPlans)
     }
 
     loadPlans()

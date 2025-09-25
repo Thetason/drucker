@@ -259,9 +259,18 @@ export default function SchedulePage() {
     <div className="min-h-screen bg-gray-900 text-white">
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* 헤더 */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">제작 스케줄</h1>
-          <p className="text-gray-400">콘텐츠 제작 일정을 관리하고 알림을 받으세요</p>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">제작 스케줄</h1>
+            <p className="text-gray-400">콘텐츠 제작 일정을 관리하고 알림을 받으세요</p>
+          </div>
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 px-3 py-1.5 border border-gray-700 rounded-lg text-sm text-gray-300 hover:text-white hover:border-gray-500 transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            메인으로 돌아가기
+          </Link>
         </div>
 
         {/* 툴바 */}

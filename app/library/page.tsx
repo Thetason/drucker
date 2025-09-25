@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Search, Grid, List, Clock, TrendingUp, Eye, Calendar, Film } from 'lucide-react'
+import { Plus, Search, Grid, List, Clock, TrendingUp, Eye, Calendar, Film, ChevronLeft } from 'lucide-react'
 import ContentPlanDetailModal from '@/components/content-plan-detail-modal'
 import Link from 'next/link'
 
@@ -248,9 +248,18 @@ export default function LibraryPage() {
     <div className="min-h-screen bg-gray-900 text-white">
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* 헤더 */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">기획서 라이브러리</h1>
-          <p className="text-gray-400">모든 콘텐츠 기획서를 한눈에 관리하세요</p>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">기획서 라이브러리</h1>
+            <p className="text-gray-400">모든 콘텐츠 기획서를 한눈에 관리하세요</p>
+          </div>
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 px-3 py-1.5 border border-gray-700 rounded-lg text-sm text-gray-300 hover:text-white hover:border-gray-500 transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            메인으로 돌아가기
+          </Link>
         </div>
 
         {/* 툴바 */}

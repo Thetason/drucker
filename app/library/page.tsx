@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Search, Filter, Grid, List, Clock, TrendingUp, Eye, Calendar, Film } from 'lucide-react'
+import { Plus, Search, Grid, List, Clock, TrendingUp, Eye, Calendar, Film } from 'lucide-react'
 import ContentPlanDetailModal from '@/components/content-plan-detail-modal'
 import Link from 'next/link'
 
@@ -40,6 +40,192 @@ interface ContentPlan {
   updatedAt: string
   status: 'draft' | 'in_production' | 'published'
   platform: string
+  source?: 'sample' | 'user'
+}
+
+const DEFAULT_THUMBNAIL = '/api/placeholder/400/225'
+const DEFAULT_RESOURCES = ['기획', '촬영', '편집']
+
+const SAMPLE_PLANS: ContentPlan[] = [
+  {
+    id: 'sample-1',
+    title: '노래로 자신의 감정을 자유롭게 표현하고 듣는 사람에게 감동을 줄 수 있게 될 거예요',
+    thumbnail: DEFAULT_THUMBNAIL,
+    packaging: {
+      title: '10분만에 노래 실력 늘리는 방법',
+      thumbnail: DEFAULT_THUMBNAIL,
+      hook: '프로 가수들이 숨겨온 연습법 공개'
+    },
+    target: {
+      audience: '노래를 좋아하는 20-30대',
+      painPoints: ['노래 실력이 늘지 않음', '고음이 안 올라감'],
+      desires: ['노래방 스타되기', '감정 표현 잘하기']
+    },
+    content: {
+      structure: '도입 → 문제 제기 → 해결책 → 실습 → 마무리',
+      keyPoints: ['호흡법', '발성법', '감정 표현'],
+      cta: '구독하고 더 많은 팁 받기'
+    },
+    production: {
+      duration: '3일',
+      resources: ['카메라', '마이크', '조명'],
+      deadline: '2025.09.05'
+    },
+    metrics: {
+      expectedViews: '10K+',
+      expectedEngagement: '15%',
+      successMetrics: ['조회수 1만 이상', '좋아요 1천 이상']
+    },
+    createdAt: '2025-08-31',
+    updatedAt: '2025-08-31',
+    status: 'draft',
+    platform: 'YouTube',
+    source: 'sample'
+  },
+  {
+    id: 'sample-2',
+    title: 'AI 도구 활용법 - 업무 생산성 2배 높이기',
+    thumbnail: DEFAULT_THUMBNAIL,
+    packaging: {
+      title: 'ChatGPT로 일 잘하는 직장인 되기',
+      thumbnail: DEFAULT_THUMBNAIL,
+      hook: '월급은 그대로인데 일은 반으로 줄이는 방법'
+    },
+    target: {
+      audience: '20-40대 직장인',
+      painPoints: ['반복 업무 스트레스', '야근 지옥'],
+      desires: ['워라밸', '연봉 상승']
+    },
+    content: {
+      structure: '문제 상황 → AI 도구 소개 → 실제 활용 사례 → 팁',
+      keyPoints: ['ChatGPT 활용법', '자동화 도구', '프롬프트 작성법'],
+      cta: '더 많은 AI 활용법 보러가기'
+    },
+    production: {
+      duration: '2일',
+      resources: ['화면 녹화 프로그램', '편집 툴'],
+      deadline: '2025.09.03'
+    },
+    metrics: {
+      expectedViews: '50K+',
+      expectedEngagement: '20%',
+      successMetrics: ['조회수 5만 이상', '저장 5천 이상']
+    },
+    createdAt: '2025-08-30',
+    updatedAt: '2025-08-30',
+    status: 'in_production',
+    platform: 'Instagram',
+    source: 'sample'
+  }
+]
+
+const mapPlatformLabel = (platform?: string) => {
+  switch (platform) {
+    case 'youtube':
+      return 'YouTube'
+    case 'shorts':
+      return 'YouTube · Shorts'
+    case 'reels':
+      return 'Instagram · Reels'
+    case 'instagram':
+      return 'Instagram'
+    case 'tiktok':
+      return 'TikTok'
+    default:
+      return platform || '기타'
+  }
+}
+
+const toPlanStructure = (story: Record<string, string> | undefined, storyType?: string) => {
+  if (!story || typeof story !== 'object') {
+    return storyType ? `스토리 타입: ${storyType}` : '스토리 구조 없음'
+  }
+
+  const entries = Object.entries(story)
+    .filter(([, value]) => typeof value === 'string' && value.trim().length > 0)
+
+  if (entries.length === 0) {
+    return storyType ? `스토리 타입: ${storyType}` : '스토리 구조 없음'
+  }
+
+  return entries.map(([key, value]) => `${key.toUpperCase()}: ${value}`).join(' → ')
+}
+
+const transformSavedPlan = (rawPlan: any): ContentPlan | null => {
+  if (!rawPlan || typeof rawPlan !== 'object') return null
+
+  const {
+    id,
+    title,
+    altTitle,
+    target,
+    duration,
+    platform,
+    goal,
+    hook,
+    storyType,
+    story,
+    retention,
+    cta,
+    dmKeyword,
+    script,
+    thumbnailKeywords,
+    createdAt,
+    updatedAt,
+    status,
+    targetPainPoints,
+    targetInterests
+  } = rawPlan
+
+  const safeId = typeof id === 'string' ? id : Date.now().toString()
+  const lastUpdated = typeof updatedAt === 'string' ? updatedAt : createdAt || new Date().toISOString()
+  const storyStructure = toPlanStructure(story, storyType)
+  const keyPoints = story && typeof story === 'object'
+    ? Object.values(story).filter((value) => typeof value === 'string' && value.trim().length > 0)
+    : []
+  const retentionHighlights = retention && typeof retention === 'object'
+    ? Object.values(retention).filter((value) => typeof value === 'string' && value.trim().length > 0)
+    : []
+  const contentMix = rawPlan?.contentMix && typeof rawPlan.contentMix === 'object'
+    ? Object.entries(rawPlan.contentMix).map(([key, value]) => `${key.toUpperCase()}: ${value}%`)
+    : []
+
+  return {
+    id: safeId,
+    title: goal || title || '콘텐츠 기획서',
+    thumbnail: DEFAULT_THUMBNAIL,
+    packaging: {
+      title: title || goal || '제목 없음 콘텐츠',
+      thumbnail: DEFAULT_THUMBNAIL,
+      hook: hook || altTitle || dmKeyword || '훅을 추가해보세요'
+    },
+    target: {
+      audience: target || '타겟 미정',
+      painPoints: Array.isArray(targetPainPoints) ? targetPainPoints : retentionHighlights,
+      desires: Array.isArray(targetInterests) ? targetInterests : []
+    },
+    content: {
+      structure: storyStructure,
+      keyPoints,
+      cta: cta || 'CTA 미정'
+    },
+    production: {
+      duration: duration || '미정',
+      resources: contentMix.length > 0 ? contentMix : (Array.isArray(thumbnailKeywords) && thumbnailKeywords.length > 0 ? thumbnailKeywords : DEFAULT_RESOURCES),
+      deadline: lastUpdated.split('T')[0]
+    },
+    metrics: {
+      expectedViews: '-',
+      expectedEngagement: '-',
+      successMetrics: retentionHighlights.length > 0 ? retentionHighlights : (Array.isArray(thumbnailKeywords) ? thumbnailKeywords : [])
+    },
+    notes: typeof script === 'string' ? script : undefined,
+    createdAt: typeof createdAt === 'string' ? createdAt : lastUpdated,
+    updatedAt: lastUpdated,
+    status: status === 'in_production' || status === 'published' ? status : 'draft',
+    platform: mapPlatformLabel(platform),
+    source: 'user'
+  }
 }
 
 export default function LibraryPage() {
@@ -50,81 +236,37 @@ export default function LibraryPage() {
   const [selectedPlan, setSelectedPlan] = useState<ContentPlan | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [plans, setPlans] = useState<ContentPlan[]>([])
+  const userPlans = plans.filter(plan => plan.source === 'user')
 
-  // 임시 데이터 로드
   useEffect(() => {
-    // 실제로는 API에서 데이터를 가져옴
-    const mockPlans: ContentPlan[] = [
-      {
-        id: '1',
-        title: '노래로 자신의 감정을 자유롭게 표현하고 듣는 사람에게 감동을 줄 수 있게 될 거예요',
-        thumbnail: '/api/placeholder/400/225',
-        packaging: {
-          title: '10분만에 노래 실력 늘리는 방법',
-          thumbnail: '/api/placeholder/400/225',
-          hook: '프로 가수들이 숨겨온 연습법 공개'
-        },
-        target: {
-          audience: '노래를 좋아하는 20-30대',
-          painPoints: ['노래 실력이 늘지 않음', '고음이 안 올라감'],
-          desires: ['노래방 스타되기', '감정 표현 잘하기']
-        },
-        content: {
-          structure: '도입 → 문제 제기 → 해결책 → 실습 → 마무리',
-          keyPoints: ['호흡법', '발성법', '감정 표현'],
-          cta: '구독하고 더 많은 팁 받기'
-        },
-        production: {
-          duration: '3일',
-          resources: ['카메라', '마이크', '조명'],
-          deadline: '2025.09.05'
-        },
-        metrics: {
-          expectedViews: '10K+',
-          expectedEngagement: '15%',
-          successMetrics: ['조회수 1만 이상', '좋아요 1천 이상']
-        },
-        createdAt: '2025-08-31',
-        updatedAt: '2025-08-31',
-        status: 'draft',
-        platform: 'YouTube'
-      },
-      {
-        id: '2',
-        title: 'AI 도구 활용법 - 업무 생산성 2배 높이기',
-        thumbnail: '/api/placeholder/400/225',
-        packaging: {
-          title: 'ChatGPT로 일 잘하는 직장인 되기',
-          thumbnail: '/api/placeholder/400/225',
-          hook: '월급은 그대로인데 일은 반으로 줄이는 방법'
-        },
-        target: {
-          audience: '20-40대 직장인',
-          painPoints: ['반복 업무 스트레스', '야근 지옥'],
-          desires: ['워라밸', '연봉 상승']
-        },
-        content: {
-          structure: '문제 상황 → AI 도구 소개 → 실제 활용 사례 → 팁',
-          keyPoints: ['ChatGPT 활용법', '자동화 도구', '프롬프트 작성법'],
-          cta: '더 많은 AI 활용법 보러가기'
-        },
-        production: {
-          duration: '2일',
-          resources: ['화면 녹화 프로그램', '편집 툴'],
-          deadline: '2025.09.03'
-        },
-        metrics: {
-          expectedViews: '50K+',
-          expectedEngagement: '20%',
-          successMetrics: ['조회수 5만 이상', '저장 5천 이상']
-        },
-        createdAt: '2025-08-30',
-        updatedAt: '2025-08-30',
-        status: 'in_production',
-        platform: 'Instagram'
+    const loadPlans = () => {
+      if (typeof window === 'undefined') return
+
+      const raw = window.localStorage.getItem('drucker-plans')
+      let userPlans: ContentPlan[] = []
+
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw)
+          if (Array.isArray(parsed)) {
+            userPlans = parsed
+              .map(transformSavedPlan)
+              .filter((plan): plan is ContentPlan => plan !== null)
+          }
+        } catch (error) {
+          console.error('라이브러리 기획서 로드 오류:', error)
+        }
       }
-    ]
-    setPlans(mockPlans)
+
+      const combined = userPlans.length > 0
+        ? [...userPlans, ...SAMPLE_PLANS]
+        : SAMPLE_PLANS
+
+      // 기존 사용자 기획서는 유지하면서 샘플 데이터를 보조로 제공
+      setPlans(combined)
+    }
+
+    loadPlans()
   }, [])
 
   // 기획서 더블클릭 핸들러
@@ -135,10 +277,19 @@ export default function LibraryPage() {
 
   // 필터링된 기획서
   const filteredPlans = plans.filter(plan => {
-    const matchesSearch = plan.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          plan.packaging.title.toLowerCase().includes(searchQuery.toLowerCase())
+    const query = searchQuery.trim().toLowerCase()
+    const searchableFields = [
+      plan.title,
+      plan.packaging.title,
+      plan.packaging.hook,
+      plan.target.audience
+    ]
+    const matchesSearch =
+      query.length === 0 ||
+      searchableFields.some(field => (field ?? '').toLowerCase().includes(query))
+
     const matchesStatus = filterStatus === 'all' || plan.status === filterStatus
-    const matchesPlatform = filterPlatform === 'all' || plan.platform === filterPlatform
+    const matchesPlatform = filterPlatform === 'all' || plan.platform.includes(filterPlatform)
     
     return matchesSearch && matchesStatus && matchesPlatform
   })
@@ -241,22 +392,22 @@ export default function LibraryPage() {
 
         {/* 통계 카드 */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-gray-800 rounded-lg p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-gray-400">전체 기획서</span>
-              <Film className="w-5 h-5 text-blue-400" />
-            </div>
-            <p className="text-2xl font-bold">{plans.length}</p>
+        <div className="bg-gray-800 rounded-lg p-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-gray-400">전체 기획서</span>
+            <Film className="w-5 h-5 text-blue-400" />
           </div>
-          <div className="bg-gray-800 rounded-lg p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-gray-400">제작중</span>
-              <Clock className="w-5 h-5 text-yellow-400" />
-            </div>
-            <p className="text-2xl font-bold">
-              {plans.filter(p => p.status === 'in_production').length}
-            </p>
+          <p className="text-2xl font-bold">{userPlans.length}</p>
+        </div>
+        <div className="bg-gray-800 rounded-lg p-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-gray-400">제작중</span>
+            <Clock className="w-5 h-5 text-yellow-400" />
           </div>
+          <p className="text-2xl font-bold">
+            {userPlans.filter(p => p.status === 'in_production').length}
+          </p>
+        </div>
           <div className="bg-gray-800 rounded-lg p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-gray-400">이번 주 마감</span>
@@ -293,6 +444,11 @@ export default function LibraryPage() {
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
                       <Film className="w-16 h-16 text-gray-600" />
+                    </div>
+                  )}
+                  {plan.source === 'sample' && (
+                    <div className="absolute top-2 left-2 px-2 py-1 bg-black/60 rounded text-xs text-white">
+                      샘플
                     </div>
                   )}
                   <div className="absolute top-2 right-2">
@@ -352,17 +508,20 @@ export default function LibraryPage() {
 
                   {/* 내용 */}
                   <div className="flex-1">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <h3 className="font-semibold">{plan.packaging.title}</h3>
-                        <p className="text-sm text-gray-400">{plan.packaging.hook}</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className={`px-2 py-1 rounded text-xs text-white ${getStatusColor(plan.status)}`}>
-                          {getStatusText(plan.status)}
-                        </span>
-                        <span className="px-2 py-1 bg-gray-700 rounded text-xs">
-                          {plan.platform}
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <h3 className="font-semibold">{plan.packaging.title}</h3>
+                      <p className="text-sm text-gray-400">{plan.packaging.hook}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {plan.source === 'sample' && (
+                        <span className="px-2 py-1 bg-gray-700 rounded text-xs text-gray-300">샘플</span>
+                      )}
+                      <span className={`px-2 py-1 rounded text-xs text-white ${getStatusColor(plan.status)}`}>
+                        {getStatusText(plan.status)}
+                      </span>
+                      <span className="px-2 py-1 bg-gray-700 rounded text-xs">
+                        {plan.platform}
                         </span>
                       </div>
                     </div>

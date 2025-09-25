@@ -151,6 +151,20 @@ const toPlanStructure = (story: Record<string, string> | undefined, storyType?: 
   return entries.map(([key, value]) => `${key.toUpperCase()}: ${value}`).join(' → ')
 }
 
+const extractStringValues = (value: unknown): string[] => {
+  if (!value) return []
+
+  if (Array.isArray(value)) {
+    return value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+  }
+
+  if (typeof value === 'object') {
+    return Object.values(value).filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+  }
+
+  return []
+}
+
 const transformSavedPlan = (rawPlan: any): ContentPlan | null => {
   if (!rawPlan || typeof rawPlan !== 'object') return null
 
@@ -180,12 +194,8 @@ const transformSavedPlan = (rawPlan: any): ContentPlan | null => {
   const safeId = typeof id === 'string' ? id : Date.now().toString()
   const lastUpdated = typeof updatedAt === 'string' ? updatedAt : createdAt || new Date().toISOString()
   const storyStructure = toPlanStructure(story, storyType)
-  const keyPoints = story && typeof story === 'object'
-    ? Object.values(story).filter((value) => typeof value === 'string' && value.trim().length > 0)
-    : []
-  const retentionHighlights = retention && typeof retention === 'object'
-    ? Object.values(retention).filter((value) => typeof value === 'string' && value.trim().length > 0)
-    : []
+  const keyPoints = extractStringValues(story)
+  const retentionHighlights = extractStringValues(retention)
   const contentMix = rawPlan?.contentMix && typeof rawPlan.contentMix === 'object'
     ? Object.entries(rawPlan.contentMix).map(([key, value]) => `${key.toUpperCase()}: ${value}%`)
     : []

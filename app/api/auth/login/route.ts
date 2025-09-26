@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { ensureSuperAdmin } from '@/lib/admin'
 import bcrypt from 'bcryptjs'
 
 export async function POST(request: Request) {
@@ -13,6 +14,9 @@ export async function POST(request: Request) {
         { status: 400 }
       )
     }
+
+    // 슈퍼 어드민 계정 자동 보장
+    await ensureSuperAdmin()
 
     // 사용자 찾기
     const user = await prisma.user.findUnique({

@@ -1,12 +1,18 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { 
-  Users, Shield, UserCheck, UserX, 
-  Activity, TrendingUp, AlertCircle, 
-  Crown, ShieldCheck, User, Settings,
-  RefreshCw, Search, Filter, ChevronDown,
-  Mail, Calendar, Hash, FileText, CheckCircle
+import {
+  Users,
+  Shield,
+  UserCheck,
+  AlertCircle,
+  Crown,
+  ShieldCheck,
+  User,
+  RefreshCw,
+  Search,
+  FileText,
+  CheckCircle
 } from "lucide-react"
 
 interface UserData {
@@ -16,6 +22,7 @@ interface UserData {
   role: 'MASTER' | 'ADMIN' | 'USER'
   isActive: boolean
   createdAt: string
+  updatedAt: string
   _count: {
     contentPlans: number
     tasks: number
@@ -35,83 +42,91 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState<UserData[]>([])
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [filterRole, setFilterRole] = useState<'all' | 'MASTER' | 'ADMIN' | 'USER'>('all')
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all')
-  const [isAuthorized, setIsAuthorized] = useState(false)
-  const [password, setPassword] = useState("")
-
-  // 관리자 인증 체크
-  const checkAuth = () => {
-    const authData = localStorage.getItem('drucker-auth')
-    if (authData) {
-      const user = JSON.parse(authData)
-      // 실제로는 서버에서 role을 확인해야 함
-      if (user.email === 'master@drucker.com') {
-        setIsAuthorized(true)
-        fetchUsers()
-      }
-    }
-  }
-
-  // 간단한 비밀번호 인증 (임시) - 실제로는 서버 인증 필요
-  const handleAuth = async () => {
-    // TODO: 서버사이드 인증 구현 필요
-    // 임시로 하드코딩된 비밀번호 제거
-    alert('보안 업데이트 중입니다. 서버 인증 시스템 구현이 필요합니다.')
-    return
-  }
-
-  useEffect(() => {
-    // 임시 인증 체크
-    const adminAuth = localStorage.getItem('admin-auth')
-    if (adminAuth === 'true') {
-      setIsAuthorized(true)
-      fetchUsers()
-    }
-  }, [])
+  const [currentAdmin, setCurrentAdmin] = useState<{ id: string; email: string; role: 'MASTER' | 'ADMIN' } | null>(null)
+  const [maxUsers, setMaxUsers] = useState<number | null>(null)
 
   const fetchUsers = async () => {
     try {
       setLoading(true)
       const response = await fetch('/api/admin/users', {
-        headers: {
-          'x-admin-auth': 'master-admin-2025'
-        }
+        credentials: 'include'
       })
-      
-      if (!response.ok) throw new Error('Failed to fetch users')
-      
+
+      if (response.status === 401 || response.status === 403) {
+        setError('관리자 권한이 필요합니다.')
+        setUsers([])
+        setStats(null)
+        setCurrentAdmin(null)
+        setMaxUsers(null)
+        return
+      }
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch users')
+      }
+
       const data = await response.json()
       setUsers(data.users)
       setStats(data.stats)
-    } catch (error) {
-      console.error('Error fetching users:', error)
+      setCurrentAdmin(data.currentUser)
+      setMaxUsers(data.maxUsers ?? null)
+      setError(null)
+    } catch (err) {
+      console.error('Error fetching users:', err)
+      setError('사용자 목록을 불러오지 못했습니다.')
     } finally {
       setLoading(false)
     }
   }
 
-  const toggleUserStatus = async (userId: string, currentStatus: boolean) => {
+  useEffect(() => {
+    fetchUsers()
+  }, [])
+
+  const updateUser = async (userId: string, payload: Record<string, unknown>) => {
     try {
       const response = await fetch('/api/admin/users', {
         method: 'PATCH',
+        credentials: 'include',
         headers: {
-          'Content-Type': 'application/json',
-          'x-admin-auth': 'master-admin-2025'
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          userId,
-          isActive: !currentStatus
-        })
+        body: JSON.stringify({ userId, ...payload })
       })
 
-      if (response.ok) {
-        fetchUsers() // 목록 새로고침
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || '사용자 정보를 수정하지 못했습니다.')
       }
-    } catch (error) {
-      console.error('Error updating user:', error)
+
+      await fetchUsers()
+      return true
+    } catch (err: any) {
+      alert(err.message || '사용자 정보를 수정하지 못했습니다.')
+      return false
     }
+  }
+
+  const toggleUserStatus = (userId: string, currentStatus: boolean) => {
+    updateUser(userId, { isActive: !currentStatus })
+  }
+
+  const handleRoleChange = (userId: string, value: 'MASTER' | 'ADMIN' | 'USER') => {
+    updateUser(userId, { role: value })
+  }
+
+  const handlePasswordReset = async (userId: string, email: string) => {
+    const newPassword = window.prompt(`${email} 계정의 새 비밀번호를 입력하세요 (8자 이상)`) ?? ''
+    if (!newPassword.trim()) {
+      return
+    }
+
+    updateUser(userId, { password: newPassword.trim() })
   }
 
   // 필터링된 사용자 목록
@@ -139,36 +154,6 @@ export default function AdminDashboard() {
       case 'ADMIN': return 'bg-blue-100 text-blue-700 border-blue-300'
       default: return 'bg-gray-100 text-gray-700 border-gray-300'
     }
-  }
-
-  if (!isAuthorized) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-white p-8 rounded-xl shadow-lg max-w-md w-full">
-          <div className="text-center mb-6">
-            <Shield className="h-12 w-12 text-gray-600 mx-auto mb-3" />
-            <h1 className="text-2xl font-bold">관리자 인증</h1>
-            <p className="text-sm text-gray-600 mt-2">관리자 비밀번호를 입력하세요</p>
-          </div>
-          
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleAuth()}
-            placeholder="비밀번호"
-            className="w-full px-4 py-2 border rounded-lg mb-4"
-          />
-          
-          <button
-            onClick={handleAuth}
-            className="w-full bg-black text-white py-2 rounded-lg hover:bg-gray-800"
-          >
-            로그인
-          </button>
-        </div>
-      </div>
-    )
   }
 
   if (loading) {
@@ -236,12 +221,14 @@ export default function AdminDashboard() {
                 <div>
                   <p className="text-sm text-blue-600">일반 사용자</p>
                   <p className="text-2xl font-bold text-blue-700">
-                    {stats.activeUsers}/20
+                    {stats.activeUsers}/{maxUsers ?? '--'}
                   </p>
                   <div className="w-full bg-gray-200 rounded-full h-1 mt-1">
                     <div 
                       className="bg-blue-500 h-1 rounded-full"
-                      style={{ width: `${(stats.activeUsers / 20) * 100}%` }}
+                      style={{
+                        width: `${maxUsers ? Math.min((stats.activeUsers / maxUsers) * 100, 100) : 0}%`
+                      }}
                     />
                   </div>
                 </div>
@@ -274,7 +261,7 @@ export default function AdminDashboard() {
                 <div>
                   <p className="text-sm text-red-600">남은 자리</p>
                   <p className="text-2xl font-bold text-red-700">
-                    {20 - stats.activeUsers}
+                    {maxUsers != null ? Math.max(maxUsers - stats.activeUsers, 0) : '--'}
                   </p>
                 </div>
                 <AlertCircle className="h-8 w-8 text-red-400" />
@@ -357,10 +344,23 @@ export default function AdminDashboard() {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${getRoleBadge(user.role)}`}>
-                      {getRoleIcon(user.role)}
-                      {user.role}
-                    </span>
+                    <div className="flex items-center gap-3">
+                      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${getRoleBadge(user.role)}`}>
+                        {getRoleIcon(user.role)}
+                        {user.role}
+                      </span>
+                      {currentAdmin?.role === 'MASTER' && user.id !== currentAdmin.id && (
+                        <select
+                          className="text-xs border rounded px-2 py-1"
+                          value={user.role}
+                          onChange={(e) => handleRoleChange(user.id, e.target.value as UserData['role'])}
+                        >
+                          <option value="MASTER">MASTER</option>
+                          <option value="ADMIN">ADMIN</option>
+                          <option value="USER">USER</option>
+                        </select>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
@@ -386,17 +386,23 @@ export default function AdminDashboard() {
                   <td className="px-6 py-4 text-sm text-gray-600">
                     {new Date(user.createdAt).toLocaleDateString('ko-KR')}
                   </td>
-                  <td className="px-6 py-4">
-                    {user.role === 'USER' && (
+                  <td className="px-6 py-4 space-x-2">
+                    <button
+                      onClick={() => toggleUserStatus(user.id, user.isActive)}
+                      className={`px-3 py-1 rounded text-xs font-medium ${
+                        user.isActive
+                          ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                          : 'bg-green-100 text-green-700 hover:bg-green-200'
+                      }`}
+                    >
+                      {user.isActive ? '비활성화' : '활성화'}
+                    </button>
+                    {currentAdmin && (
                       <button
-                        onClick={() => toggleUserStatus(user.id, user.isActive)}
-                        className={`px-3 py-1 rounded text-xs font-medium ${
-                          user.isActive
-                            ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                            : 'bg-green-100 text-green-700 hover:bg-green-200'
-                        }`}
+                        onClick={() => handlePasswordReset(user.id, user.email)}
+                        className="px-3 py-1 rounded text-xs font-medium bg-gray-100 text-gray-700 hover:bg-gray-200"
                       >
-                        {user.isActive ? '비활성화' : '활성화'}
+                        비밀번호 초기화
                       </button>
                     )}
                   </td>

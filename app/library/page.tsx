@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Plus, Search, Grid, List, Clock, TrendingUp, Eye, Calendar, Film, ChevronLeft } from 'lucide-react'
 import ContentPlanDetailModal from '@/components/content-plan-detail-modal'
 import Link from 'next/link'
+import { plansAPI } from '@/lib/api-client'
 
 // 임시 데이터 타입
 interface ContentPlan {
@@ -95,51 +96,59 @@ const extractStringValues = (value: unknown): string[] => {
 const transformSavedPlan = (rawPlan: any): ContentPlan | null => {
   if (!rawPlan || typeof rawPlan !== 'object') return null
 
+  const metadata = rawPlan.metadata || {}
+
   const {
     id,
     title,
-    altTitle,
-    target,
+    targetAudience,
     duration,
     platform,
     goal,
     hook,
+    mainContent,
+    keywords,
+    createdAt,
+    updatedAt
+  } = rawPlan
+
+  const {
+    altTitle,
     storyType,
     story,
     retention,
-    cta,
+    retentionEnabled,
     dmKeyword,
-    script,
-    thumbnailKeywords,
-    createdAt,
-    updatedAt,
-    status,
-    targetPainPoints,
-    targetInterests
-  } = rawPlan
+    cta,
+    script
+  } = metadata
 
   const safeId = typeof id === 'string' ? id : Date.now().toString()
   const lastUpdated = typeof updatedAt === 'string' ? updatedAt : createdAt || new Date().toISOString()
-  const storyStructure = toPlanStructure(story, storyType)
-  const keyPoints = extractStringValues(story)
+  const storySource = story || mainContent
+  const storyStructure = toPlanStructure(storySource, storyType)
+  const keyPoints = extractStringValues(storySource)
   const retentionHighlights = extractStringValues(retention)
-  const contentMix = rawPlan?.contentMix && typeof rawPlan.contentMix === 'object'
-    ? Object.entries(rawPlan.contentMix).map(([key, value]) => `${key.toUpperCase()}: ${value}%`)
-    : []
+  const keywordList = Array.isArray(rawPlan?.thumbnailKeywords)
+    ? rawPlan.thumbnailKeywords
+    : Array.isArray(keywords)
+      ? keywords
+      : []
+  const contentMix: string[] = []
 
   return {
     id: safeId,
     title: goal || title || '콘텐츠 기획서',
     thumbnail: DEFAULT_THUMBNAIL,
     packaging: {
-      title: title || goal || '제목 없음 콘텐츠',
+      title: title || altTitle || goal || '제목 없음 콘텐츠',
       thumbnail: DEFAULT_THUMBNAIL,
-      hook: hook || altTitle || dmKeyword || '훅을 추가해보세요'
+      hook: hook || dmKeyword || '훅을 추가해보세요'
     },
     target: {
-      audience: target || '타겟 미정',
-      painPoints: Array.isArray(targetPainPoints) ? targetPainPoints : retentionHighlights,
-      desires: Array.isArray(targetInterests) ? targetInterests : []
+      audience: targetAudience || rawPlan?.target || '타겟 미정',
+      painPoints: retentionHighlights,
+      desires: []
     },
     content: {
       structure: storyStructure,
@@ -148,18 +157,18 @@ const transformSavedPlan = (rawPlan: any): ContentPlan | null => {
     },
     production: {
       duration: duration || '미정',
-      resources: contentMix.length > 0 ? contentMix : (Array.isArray(thumbnailKeywords) && thumbnailKeywords.length > 0 ? thumbnailKeywords : DEFAULT_RESOURCES),
+      resources: contentMix.length > 0 ? contentMix : (keywordList.length > 0 ? keywordList : DEFAULT_RESOURCES),
       deadline: lastUpdated.split('T')[0]
     },
     metrics: {
       expectedViews: '-',
       expectedEngagement: '-',
-      successMetrics: retentionHighlights.length > 0 ? retentionHighlights : (Array.isArray(thumbnailKeywords) ? thumbnailKeywords : [])
+      successMetrics: retentionHighlights.length > 0 ? retentionHighlights : keywordList
     },
     notes: typeof script === 'string' ? script : undefined,
     createdAt: typeof createdAt === 'string' ? createdAt : lastUpdated,
     updatedAt: lastUpdated,
-    status: status === 'in_production' || status === 'published' ? status : 'draft',
+    status: 'draft',
     platform: mapPlatformLabel(platform),
     source: 'user'
   }
@@ -176,26 +185,22 @@ export default function LibraryPage() {
   const userPlans = plans.filter(plan => plan.source === 'user')
 
   useEffect(() => {
-    const loadPlans = () => {
-      if (typeof window === 'undefined') return
-
-      const raw = window.localStorage.getItem('drucker-plans')
-      let userPlans: ContentPlan[] = []
-
-      if (raw) {
-        try {
-          const parsed = JSON.parse(raw)
-          if (Array.isArray(parsed)) {
-            userPlans = parsed
-              .map(transformSavedPlan)
-              .filter((plan): plan is ContentPlan => plan !== null)
-          }
-        } catch (error) {
-          console.error('라이브러리 기획서 로드 오류:', error)
-        }
+    const loadPlans = async () => {
+      try {
+        const serverPlans = await plansAPI.getAll()
+        const mapped = Array.isArray(serverPlans)
+          ? serverPlans.reduce<ContentPlan[]>((acc, rawPlan) => {
+              const transformed = transformSavedPlan(rawPlan)
+              if (transformed) {
+                acc.push(transformed)
+              }
+              return acc
+            }, [])
+          : []
+        setPlans(mapped)
+      } catch (error) {
+        console.error('라이브러리 기획서 불러오기 실패:', error)
       }
-
-      setPlans(userPlans)
     }
 
     loadPlans()

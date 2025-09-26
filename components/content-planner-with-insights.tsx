@@ -10,6 +10,7 @@ import {
   CheckSquare, AlertTriangle, ThumbsUp, ThumbsDown,
   Eye, Brain, Heart, AlertCircle, Info, FileText
 } from "lucide-react"
+import { personaAPI, plansAPI } from "@/lib/api-client"
 
 interface ContentPlan {
   id: string
@@ -260,10 +261,10 @@ const checkDecisionCriteria = (plan: ContentPlan) => {
   return criteria
 }
 
-export function ContentPlannerWithInsights() {
-  const [persona, setPersona] = useState<any>(null)
-  const [plan, setPlan] = useState<ContentPlan>({
-    id: Date.now().toString(),
+const createEmptyPlan = (): ContentPlan => {
+  const timestamp = new Date().toISOString()
+  return {
+    id: `temp-${Date.now()}`,
     title: '',
     altTitle: '',
     target: '',
@@ -277,11 +278,76 @@ export function ContentPlannerWithInsights() {
     retention: {},
     cta: '',
     dmKeyword: '',
-    script: '',  // 추가: 대본 초기값
+    script: '',
     thumbnailKeywords: [],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  })
+    createdAt: timestamp,
+    updatedAt: timestamp
+  }
+}
+
+const normalizePlan = (plan: any): ContentPlan => {
+  const metadata = plan?.metadata || {}
+  const storyData = metadata.story || plan?.story || plan?.mainContent || {}
+  const retentionData = metadata.retention || plan?.retention || {}
+  const keywords = Array.isArray(plan?.thumbnailKeywords)
+    ? plan.thumbnailKeywords
+    : Array.isArray(plan?.keywords)
+      ? plan.keywords
+      : []
+
+  return {
+    id: plan?.id || `temp-${Date.now()}`,
+    title: plan?.title || '',
+    altTitle: metadata.altTitle || '',
+    target: plan?.targetAudience || plan?.target || '',
+    duration: plan?.duration || '10분',
+    platform: (plan?.platform || 'youtube').toString().toLowerCase() as ContentPlan['platform'],
+    goal: plan?.goal || '',
+    hook: plan?.hook || '',
+    storyType: metadata.storyType || 'problem-solution',
+    story: (typeof storyData === 'object' && storyData !== null) ? storyData : {},
+    retentionEnabled: Boolean(metadata.retentionEnabled ?? true),
+    retention: (typeof retentionData === 'object' && retentionData !== null) ? retentionData : {},
+    cta: metadata.cta || '',
+    dmKeyword: metadata.dmKeyword || '',
+    script: metadata.script || '',
+    thumbnailKeywords: keywords,
+    createdAt: plan?.createdAt ? new Date(plan.createdAt).toISOString() : new Date().toISOString(),
+    updatedAt: plan?.updatedAt ? new Date(plan.updatedAt).toISOString() : new Date().toISOString()
+  }
+}
+
+const buildPlanPayload = (plan: ContentPlan) => ({
+  id: plan.id?.startsWith('temp-') ? undefined : plan.id,
+  title: plan.title,
+  platform: plan.platform,
+  target: plan.target,
+  hook: plan.hook,
+  duration: plan.duration,
+  goal: plan.goal,
+  storyType: plan.storyType,
+  story: plan.story,
+  retention: plan.retention,
+  retentionEnabled: plan.retentionEnabled,
+  cta: plan.cta,
+  dmKeyword: plan.dmKeyword,
+  script: plan.script,
+  thumbnailKeywords: plan.thumbnailKeywords,
+  metadata: {
+    storyType: plan.storyType,
+    story: plan.story,
+    retention: plan.retention,
+    retentionEnabled: plan.retentionEnabled,
+    dmKeyword: plan.dmKeyword,
+    cta: plan.cta,
+    script: plan.script,
+    altTitle: plan.altTitle
+  }
+})
+
+export function ContentPlannerWithInsights() {
+  const [persona, setPersona] = useState<any>(null)
+  const [plan, setPlan] = useState<ContentPlan>(() => createEmptyPlan())
 
   const [savedPlans, setSavedPlans] = useState<ContentPlan[]>([])
   const [showSaved, setShowSaved] = useState(false)
@@ -292,27 +358,35 @@ export function ContentPlannerWithInsights() {
   const decisionCriteria = checkDecisionCriteria(plan)
   const decisionScore = Math.round((decisionCriteria.filter(c => c.met).length / decisionCriteria.length) * 100)
 
-  // Load saved plans and persona from localStorage
   useEffect(() => {
-    const saved = localStorage.getItem('drucker-plans')
-    if (saved) {
-      setSavedPlans(JSON.parse(saved))
-    }
-    
-    // Load persona data
-    const savedPersona = localStorage.getItem('drucker-persona')
-    if (savedPersona) {
-      const personaData = JSON.parse(savedPersona)
-      setPersona(personaData)
-      
-      // Auto-populate target from persona if not already set
-      if (personaData.whoIWantToTalkTo && !plan.target) {
-        setPlan(prev => ({
-          ...prev,
-          target: personaData.whoIWantToTalkTo
-        }))
+    const loadInitialData = async () => {
+      try {
+        const [personaData, plansData] = await Promise.all([
+          personaAPI.get(),
+          plansAPI.getAll()
+        ])
+
+        if (personaData) {
+          setPersona(personaData)
+          if (personaData.whoIWantToTalkTo && !plan.target) {
+            setPlan(prev => ({
+              ...prev,
+              target: personaData.whoIWantToTalkTo
+            }))
+          }
+        }
+
+        if (Array.isArray(plansData)) {
+          const normalized = plansData.map(normalizePlan)
+          setSavedPlans(normalized)
+        }
+      } catch (error) {
+        console.error('콘텐츠 플래너 초기화 오류:', error)
       }
     }
+
+    loadInitialData()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Auto-save to localStorage
@@ -326,65 +400,64 @@ export function ContentPlannerWithInsights() {
     return () => clearTimeout(timer)
   }, [plan])
 
-  const savePlan = () => {
-    if (!plan.title) {
+  const savePlan = async () => {
+    if (!plan.title.trim()) {
       alert('제목을 입력해주세요')
       return
     }
 
     setSaveStatus('saving')
-    const newPlan = { ...plan, updatedAt: new Date().toISOString() }
-    const existingIndex = savedPlans.findIndex(p => p.id === plan.id)
-    
-    let updatedPlans
-    if (existingIndex >= 0) {
-      updatedPlans = [...savedPlans]
-      updatedPlans[existingIndex] = newPlan
-    } else {
-      updatedPlans = [...savedPlans, newPlan]
-    }
-    
-    setSavedPlans(updatedPlans)
-    localStorage.setItem('drucker-plans', JSON.stringify(updatedPlans))
-    
-    setTimeout(() => {
+    try {
+      const payload = buildPlanPayload({
+        ...plan,
+        updatedAt: new Date().toISOString()
+      })
+
+      const isExisting = savedPlans.some((saved) => saved.id === plan.id && !plan.id.startsWith('temp-'))
+      const result = isExisting
+        ? await plansAPI.update({ ...payload, id: plan.id })
+        : await plansAPI.create(payload)
+
+      const normalized = normalizePlan(result)
+      setPlan(normalized)
+      setSavedPlans((prev) => {
+        const existingIndex = prev.findIndex((p) => p.id === normalized.id)
+        if (existingIndex >= 0) {
+          const copy = [...prev]
+          copy[existingIndex] = normalized
+          return copy
+        }
+        return [...prev.filter((p) => !p.id.startsWith('temp-')), normalized]
+      })
       setSaveStatus('saved')
-      setTimeout(() => setSaveStatus('idle'), 2000)
-    }, 500)
+      setTimeout(() => setSaveStatus('idle'), 1500)
+    } catch (error) {
+      console.error('기획서 저장 실패:', error)
+      alert('기획서를 저장하지 못했습니다. 다시 시도해주세요.')
+      setSaveStatus('idle')
+    }
   }
 
   const loadPlan = (planToLoad: ContentPlan) => {
-    setPlan(planToLoad)
+    setPlan({ ...planToLoad, updatedAt: new Date().toISOString() })
     setShowSaved(false)
   }
 
-  const deletePlan = (id: string) => {
-    const updatedPlans = savedPlans.filter(p => p.id !== id)
-    setSavedPlans(updatedPlans)
-    localStorage.setItem('drucker-plans', JSON.stringify(updatedPlans))
+  const deletePlan = async (id: string) => {
+    try {
+      await plansAPI.delete(id)
+      setSavedPlans(prev => prev.filter(p => p.id !== id))
+      if (plan.id === id) {
+        setPlan(createEmptyPlan())
+      }
+    } catch (error) {
+      console.error('기획서 삭제 실패:', error)
+      alert('기획서를 삭제하지 못했습니다. 다시 시도해주세요.')
+    }
   }
 
   const newPlan = () => {
-    setPlan({
-      id: Date.now().toString(),
-      title: '',
-      altTitle: '',
-      target: '',
-      duration: '10분',
-      platform: 'youtube',
-      goal: '',
-      hook: '',
-      storyType: 'problem-solution',
-      story: {},
-      retentionEnabled: true,
-      retention: {},
-      cta: '',
-      dmKeyword: '',
-      script: '',  // 추가: 대본 초기값
-      thumbnailKeywords: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    })
+    setPlan(createEmptyPlan())
   }
 
   const exportPlan = () => {

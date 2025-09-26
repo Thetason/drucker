@@ -39,16 +39,18 @@ export default function HomePage() {
     }
   }, [])
 
-  const handleLogout = () => {
-    // 쿠키 삭제
-    document.cookie = 'drucker-auth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
-    
-    // 사용자별 페르소나는 유지 (다시 로그인하면 복구됨)
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
+    } catch (error) {
+      console.error('로그아웃 실패:', error)
+    }
+
     localStorage.removeItem('drucker-auth')
     setCurrentUser(null)
     setPersonaComplete(false)
     setActiveTab("persona")
-    
+
     window.location.href = '/auth'
   }
 

@@ -79,23 +79,46 @@ model ContentPlan {
   keywords        Json?
   duration        String?
   goal            String?
-  
+  metadata        Json?
+
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+
+  tasks           Task[]
 }
 
 model Task {
-  id              String   @id @default(cuid())
+  id              String        @id @default(cuid())
   userId          String
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  planId          String?
+  plan            ContentPlan?  @relation(fields: [planId], references: [id], onDelete: SetNull)
+
   title           String
-  stage           String
-  dueDate         DateTime?
-  notes           String?
-  completed       Boolean  @default(false)
-  platform        String?
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  description     String?
+  date            DateTime
+  startTime       String?
+  endTime         String?
+  status          TaskStatus    @default(PENDING)
+  priority        TaskPriority  @default(MEDIUM)
+  reminderMinutes Int?
+  reminderMethod  String?
+  color           String?
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  DELAYED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
 }

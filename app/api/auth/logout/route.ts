@@ -12,6 +12,13 @@ export async function POST() {
     sameSite: 'lax',
     maxAge: 0
   })
+  response.cookies.set('user', '', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 0,
+    path: '/'
+  })
 
   return response
 }

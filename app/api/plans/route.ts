@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '@/lib/prisma'
 import { cookies } from 'next/headers'
-
-const prisma = new PrismaClient()
 
 // GET: 사용자 기획서 목록 조회
 export async function GET() {
@@ -54,6 +52,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '사용자를 찾을 수 없습니다' }, { status: 404 })
     }
 
+    const metadata = {
+      storyType: data.storyType ?? null,
+      story: data.story ?? null,
+      retention: data.retention ?? null,
+      retentionEnabled: data.retentionEnabled ?? null,
+      dmKeyword: data.dmKeyword ?? null,
+      cta: data.cta ?? null,
+      contentMix: data.contentMix ?? null,
+      script: data.script ?? null,
+      altTitle: data.altTitle ?? null
+    }
+
     const plan = await prisma.contentPlan.create({
       data: {
         userId: user.id,
@@ -61,10 +71,11 @@ export async function POST(request: NextRequest) {
         platform: data.platform,
         targetAudience: data.targetAudience || data.target,
         hook: data.hook,
-        mainContent: data.mainContent || [],
-        keywords: data.keywords || [],
+        mainContent: data.mainContent || data.story || [],
+        keywords: data.keywords || data.thumbnailKeywords || [],
         duration: data.duration,
         goal: data.goal,
+        metadata
       }
     })
 
@@ -111,6 +122,18 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: '기획서를 찾을 수 없습니다' }, { status: 404 })
     }
 
+    const metadata = {
+      storyType: data.storyType ?? null,
+      story: data.story ?? null,
+      retention: data.retention ?? null,
+      retentionEnabled: data.retentionEnabled ?? null,
+      dmKeyword: data.dmKeyword ?? null,
+      cta: data.cta ?? null,
+      contentMix: data.contentMix ?? null,
+      script: data.script ?? null,
+      altTitle: data.altTitle ?? null
+    }
+
     const plan = await prisma.contentPlan.update({
       where: { id: data.id },
       data: {
@@ -118,10 +141,11 @@ export async function PUT(request: NextRequest) {
         platform: data.platform,
         targetAudience: data.targetAudience || data.target,
         hook: data.hook,
-        mainContent: data.mainContent || [],
-        keywords: data.keywords || [],
+        mainContent: data.mainContent || data.story || [],
+        keywords: data.keywords || data.thumbnailKeywords || [],
         duration: data.duration,
         goal: data.goal,
+        metadata
       }
     })
 
@@ -158,16 +182,27 @@ export async function DELETE(request: NextRequest) {
     }
 
     // 권한 확인 및 삭제
-    const deleted = await prisma.contentPlan.deleteMany({
+    const existingPlan = await prisma.contentPlan.findFirst({
       where: {
         id: planId,
         userId: user.id
       }
     })
 
-    if (deleted.count === 0) {
+    if (!existingPlan) {
       return NextResponse.json({ error: '기획서를 찾을 수 없습니다' }, { status: 404 })
     }
+
+    await prisma.task.deleteMany({
+      where: {
+        planId,
+        userId: user.id
+      }
+    })
+
+    await prisma.contentPlan.delete({
+      where: { id: planId }
+    })
 
     return NextResponse.json({ success: true })
   } catch (error) {

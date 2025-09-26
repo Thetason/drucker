@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { plansAPI, tasksAPI } from '@/lib/api-client'
 import { 
   Calendar, ChevronLeft, ChevronRight, Plus, Bell, BellOff, 
   Clock, AlertCircle, CheckCircle, Play, Film,
@@ -57,8 +58,6 @@ interface TaskDraft {
   color: string
 }
 
-const TASK_STORAGE_KEY = 'drucker-schedule-tasks'
-
 const getPlatformColor = (platform?: string) => {
   switch (platform) {
     case 'youtube':
@@ -90,6 +89,34 @@ const getPlatformLabel = (platform?: string) => {
       return 'TikTok'
     default:
       return platform
+  }
+}
+
+const normalizeTask = (task: any): Task => {
+  const planPlatform = task.planPlatform || task.platform
+  const reminderEnabled = task.reminder?.enabled
+
+  return {
+    id: task.id,
+    title: task.title || '제목 없는 일정',
+    description: task.description || '',
+    date: task.date || new Date().toISOString().split('T')[0],
+    startTime: task.startTime || '',
+    endTime: task.endTime || '',
+    status: (task.status || 'pending') as Task['status'],
+    priority: (task.priority || 'medium') as Task['priority'],
+    platform: planPlatform ? getPlatformLabel(planPlatform) : undefined,
+    reminder: reminderEnabled
+      ? {
+          enabled: true,
+          time: task.reminder?.time || '60',
+          method: (task.reminder?.method || 'browser') as 'browser' | 'email' | 'both'
+        }
+      : undefined,
+    color: task.color || getPlatformColor(planPlatform),
+    planId: task.planId || '',
+    planTitle: task.planTitle || '',
+    planPlatform
   }
 }
 
@@ -150,65 +177,37 @@ export default function SchedulePage() {
       setNotificationsEnabled(true)
     }
 
-    const loadStoredTasks = () => {
-      const stored = window.localStorage.getItem(TASK_STORAGE_KEY)
-      if (!stored) {
-        setTasks([])
-        return
-      }
+    const loadData = async () => {
       try {
-        const parsed: Task[] = JSON.parse(stored)
-        if (Array.isArray(parsed)) {
-          setTasks(parsed)
-        }
+        const [plans, tasks] = await Promise.all([
+          plansAPI.getAll(),
+          tasksAPI.getAll()
+        ])
+
+        const mappedPlans: PlanOption[] = Array.isArray(plans)
+          ? plans
+              .filter((plan: any) => plan && plan.id)
+              .map((plan: any) => ({
+                id: plan.id,
+                title: plan.title || plan.goal || '제목 없는 기획',
+                platform: (plan.platform || plan.metadata?.planPlatform || '').toLowerCase(),
+                hook: plan.hook || plan.metadata?.cta,
+                target: plan.targetAudience || plan.metadata?.target,
+                updatedAt: plan.updatedAt
+              }))
+          : []
+        setPlanOptions(mappedPlans)
+
+        const mappedTasks: Task[] = Array.isArray(tasks)
+          ? tasks.map(normalizeTask)
+          : []
+        setTasks(mappedTasks)
       } catch (error) {
-        console.error('일정 로드 오류:', error)
+        console.error('스케줄 초기화 오류:', error)
       }
     }
 
-    const loadPlans = () => {
-      const rawPlans = window.localStorage.getItem('drucker-plans')
-      if (!rawPlans) {
-        setPlanOptions([])
-        return
-      }
-      try {
-        const parsed = JSON.parse(rawPlans)
-        if (Array.isArray(parsed)) {
-          const mapped: PlanOption[] = parsed
-            .filter((plan: any) => plan && plan.id)
-            .map((plan: any) => ({
-              id: plan.id,
-              title: plan.title || plan.goal || '제목 없는 기획',
-              platform: plan.platform,
-              hook: plan.hook,
-              target: plan.target,
-              updatedAt: plan.updatedAt
-            }))
-          setPlanOptions(mapped)
-        } else {
-          setPlanOptions([])
-        }
-      } catch (error) {
-        console.error('기획서 로드 오류:', error)
-        setPlanOptions([])
-      }
-    }
-
-    loadStoredTasks()
-    loadPlans()
-
-    const handleStorage = (event: StorageEvent) => {
-      if (event.key === 'drucker-plans') {
-        loadPlans()
-      }
-      if (event.key === TASK_STORAGE_KEY) {
-        loadStoredTasks()
-      }
-    }
-
-    window.addEventListener('storage', handleStorage)
-    return () => window.removeEventListener('storage', handleStorage)
+    loadData()
   }, [])
 
   // 알림 권한 요청
@@ -270,10 +269,6 @@ export default function SchedulePage() {
   }
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem(TASK_STORAGE_KEY, JSON.stringify(tasks))
-    }
-
     if (tasks.length > 0) {
       checkUpcomingReminders(tasks)
     }
@@ -290,16 +285,41 @@ export default function SchedulePage() {
     e.dataTransfer.dropEffect = 'move'
   }
 
-  const handleDrop = (e: React.DragEvent, date: string) => {
+  const handleDrop = async (e: React.DragEvent, date: string) => {
     e.preventDefault()
     if (!draggedTask) return
 
-    const updatedTasks = tasks.map(task => 
-      task.id === draggedTask.id 
-        ? { ...task, date } 
+    const updatedTasks = tasks.map(task =>
+      task.id === draggedTask.id
+        ? { ...task, date }
         : task
     )
     setTasks(updatedTasks)
+
+    try {
+      await tasksAPI.update({
+        id: draggedTask.id,
+        title: draggedTask.title,
+        description: draggedTask.description,
+        date,
+        startTime: draggedTask.startTime,
+        endTime: draggedTask.endTime,
+        status: draggedTask.status,
+        priority: draggedTask.priority,
+        reminder: draggedTask.reminder
+          ? {
+              enabled: true,
+              time: draggedTask.reminder.time,
+              method: draggedTask.reminder.method
+            }
+          : { enabled: false },
+        color: draggedTask.color,
+        planId: draggedTask.planId
+      })
+    } catch (error) {
+      console.error('일정 이동 실패:', error)
+    }
+
     setDraggedTask(null)
   }
 
@@ -339,7 +359,7 @@ export default function SchedulePage() {
     })
   }
 
-  const handleSaveTask = () => {
+  const handleSaveTask = async () => {
     if (!draft.planId) {
       alert('연결할 기획서를 선택해주세요.')
       return
@@ -351,11 +371,10 @@ export default function SchedulePage() {
     }
 
     const plan = planOptions.find(option => option.id === draft.planId)
-    const taskId = draft.id || `task-${Date.now()}`
     const taskTitle = draft.title.trim() || plan?.title || '새 일정'
 
-    const updatedTask: Task = {
-      id: taskId,
+    const payload = {
+      id: editorMode === 'edit' ? draft.id : undefined,
       title: taskTitle,
       description: draft.notes.trim() ? draft.notes.trim() : undefined,
       date: draft.date,
@@ -363,38 +382,51 @@ export default function SchedulePage() {
       endTime: draft.endTime || undefined,
       status: draft.status,
       priority: draft.priority,
-      platform: getPlatformLabel(plan?.platform),
       reminder: draft.reminderEnabled
         ? {
             enabled: true,
             time: draft.reminderTime,
             method: draft.reminderMethod
           }
-        : undefined,
+        : { enabled: false },
       color: draft.color || getPlatformColor(plan?.platform),
-      planId: draft.planId,
-      planTitle: plan?.title || taskTitle,
-      planPlatform: plan?.platform
+      planId: draft.planId
     }
 
-    setTasks(prev => {
-      const exists = prev.some(task => task.id === updatedTask.id)
-      return exists
-        ? prev.map(task => (task.id === updatedTask.id ? updatedTask : task))
-        : [...prev, updatedTask]
-    })
+    try {
+      const saved = editorMode === 'edit'
+        ? await tasksAPI.update(payload)
+        : await tasksAPI.create(payload)
 
-    closeEditor()
+      const normalized = normalizeTask(saved)
+      setTasks(prev => {
+        const exists = prev.some(task => task.id === normalized.id)
+        return exists
+          ? prev.map(task => (task.id === normalized.id ? normalized : task))
+          : [...prev, normalized]
+      })
+
+      closeEditor()
+    } catch (error) {
+      console.error('일정 저장 실패:', error)
+      alert('일정을 저장하지 못했습니다. 다시 시도해주세요.')
+    }
   }
 
-  const handleDeleteTask = () => {
+  const handleDeleteTask = async () => {
     if (editorMode !== 'edit') {
       closeEditor()
       return
     }
 
-    setTasks(prev => prev.filter(task => task.id !== draft.id))
-    closeEditor()
+    try {
+      await tasksAPI.delete(draft.id)
+      setTasks(prev => prev.filter(task => task.id !== draft.id))
+      closeEditor()
+    } catch (error) {
+      console.error('일정 삭제 실패:', error)
+      alert('일정을 삭제하지 못했습니다. 다시 시도해주세요.')
+    }
   }
 
   useEffect(() => {
@@ -597,7 +629,10 @@ export default function SchedulePage() {
               {/* 새 일정 추가 */}
               <button
                 onClick={() => openNewTask(new Date().toISOString().split('T')[0])}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg flex items-center gap-2 transition-colors"
+                disabled={!hasPlans}
+                className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
+                  hasPlans ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-700 cursor-not-allowed'
+                }`}
               >
                 <Plus className="w-4 h-4" />
                 새 일정

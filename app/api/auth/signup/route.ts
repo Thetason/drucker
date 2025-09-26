@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 
-const MAX_USERS = 20 // 초기 사용자 20명 제한
+const MAX_USERS = 30 // 서비스 초기 사용자 30명 제한
 
 export async function POST(request: Request) {
   try {

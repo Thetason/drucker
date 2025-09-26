@@ -9,6 +9,33 @@ const withCredentials = (options: RequestInit = {}) => ({
   }
 })
 
+const getStorageKey = (base: string) => {
+  if (typeof window === 'undefined') return base
+
+  try {
+    const rawAuth = localStorage.getItem('drucker-auth')
+    if (rawAuth) {
+      const parsed = JSON.parse(rawAuth)
+      if (parsed?.email) {
+        return `${base}-${parsed.email}`
+      }
+    }
+  } catch (error) {
+    console.warn('Storage key parsing error:', error)
+  }
+
+  return base
+}
+
+const removeLegacyKey = (legacyKey: string) => {
+  if (typeof window === 'undefined') return
+  try {
+    localStorage.removeItem(legacyKey)
+  } catch (error) {
+    console.warn('Legacy key cleanup error:', error)
+  }
+}
+
 // 페르소나 API
 export const personaAPI = {
   async get() {
@@ -16,11 +43,15 @@ export const personaAPI = {
       const response = await fetch('/api/persona', withCredentials())
       if (!response.ok) throw new Error('Failed to fetch persona')
       const data = await response.json()
-      localStorage.setItem('drucker-persona', JSON.stringify(data.persona))
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(getStorageKey('drucker-persona'), JSON.stringify(data.persona))
+        removeLegacyKey('drucker-persona')
+      }
       return data.persona
     } catch (error) {
       console.error('페르소나 조회 오류:', error)
-      const localData = localStorage.getItem('drucker-persona')
+      if (typeof window === 'undefined') return null
+      const localData = localStorage.getItem(getStorageKey('drucker-persona'))
       return localData ? JSON.parse(localData) : null
     }
   },
@@ -34,11 +65,16 @@ export const personaAPI = {
 
       if (!response.ok) throw new Error('Failed to save persona')
       const data = await response.json()
-      localStorage.setItem('drucker-persona', JSON.stringify(data.persona))
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(getStorageKey('drucker-persona'), JSON.stringify(data.persona))
+        removeLegacyKey('drucker-persona')
+      }
       return data.persona
     } catch (error) {
       console.error('페르소나 저장 오류:', error)
-      localStorage.setItem('drucker-persona', JSON.stringify(persona))
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(getStorageKey('drucker-persona'), JSON.stringify(persona))
+      }
       return persona
     }
   }
@@ -51,11 +87,15 @@ export const plansAPI = {
       const response = await fetch('/api/plans', withCredentials())
       if (!response.ok) throw new Error('Failed to fetch plans')
       const data = await response.json()
-      localStorage.setItem('drucker-plans', JSON.stringify(data.plans || []))
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(getStorageKey('drucker-plans'), JSON.stringify(data.plans || []))
+        removeLegacyKey('drucker-plans')
+      }
       return data.plans || []
     } catch (error) {
       console.error('기획서 조회 오류:', error)
-      const localData = localStorage.getItem('drucker-plans')
+      if (typeof window === 'undefined') return []
+      const localData = localStorage.getItem(getStorageKey('drucker-plans'))
       return localData ? JSON.parse(localData) : []
     }
   },
@@ -70,7 +110,9 @@ export const plansAPI = {
       if (!response.ok) throw new Error('Failed to create plan')
       const data = await response.json()
       const stored = await plansAPI.getAll()
-      localStorage.setItem('drucker-plans', JSON.stringify(stored))
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(getStorageKey('drucker-plans'), JSON.stringify(stored))
+      }
       return data.plan
     } catch (error) {
       console.error('기획서 생성 오류:', error)
@@ -88,7 +130,9 @@ export const plansAPI = {
       if (!response.ok) throw new Error('Failed to update plan')
       const data = await response.json()
       const stored = await plansAPI.getAll()
-      localStorage.setItem('drucker-plans', JSON.stringify(stored))
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(getStorageKey('drucker-plans'), JSON.stringify(stored))
+      }
       return data.plan
     } catch (error) {
       console.error('기획서 수정 오류:', error)
@@ -104,7 +148,9 @@ export const plansAPI = {
 
       if (!response.ok) throw new Error('Failed to delete plan')
       const stored = await plansAPI.getAll()
-      localStorage.setItem('drucker-plans', JSON.stringify(stored))
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(getStorageKey('drucker-plans'), JSON.stringify(stored))
+      }
       return true
     } catch (error) {
       console.error('기획서 삭제 오류:', error)
@@ -120,11 +166,15 @@ export const tasksAPI = {
       const response = await fetch('/api/tasks', withCredentials())
       if (!response.ok) throw new Error('Failed to fetch tasks')
       const data = await response.json()
-      localStorage.setItem('drucker-tasks', JSON.stringify(data.tasks || []))
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(getStorageKey('drucker-tasks'), JSON.stringify(data.tasks || []))
+        removeLegacyKey('drucker-tasks')
+      }
       return data.tasks || []
     } catch (error) {
       console.error('작업 조회 오류:', error)
-      const localData = localStorage.getItem('drucker-tasks')
+      if (typeof window === 'undefined') return []
+      const localData = localStorage.getItem(getStorageKey('drucker-tasks'))
       return localData ? JSON.parse(localData) : []
     }
   },
@@ -141,7 +191,9 @@ export const tasksAPI = {
 
     const data = await response.json()
     const stored = await tasksAPI.getAll()
-    localStorage.setItem('drucker-tasks', JSON.stringify(stored))
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(getStorageKey('drucker-tasks'), JSON.stringify(stored))
+    }
     return data.task
   },
 
@@ -157,7 +209,9 @@ export const tasksAPI = {
 
     const data = await response.json()
     const stored = await tasksAPI.getAll()
-    localStorage.setItem('drucker-tasks', JSON.stringify(stored))
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(getStorageKey('drucker-tasks'), JSON.stringify(stored))
+    }
     return data.task
   },
 
@@ -171,7 +225,9 @@ export const tasksAPI = {
     }
 
     const stored = await tasksAPI.getAll()
-    localStorage.setItem('drucker-tasks', JSON.stringify(stored))
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(getStorageKey('drucker-tasks'), JSON.stringify(stored))
+    }
     return true
   }
 }

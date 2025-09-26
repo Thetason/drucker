@@ -4,25 +4,40 @@ import { useState, useEffect } from "react"
 import { ContentPlannerWithInsights } from "@/components/content-planner-with-insights"
 import { ProductionScheduleV2 } from "@/components/production-schedule-v2"
 import { CreatorPersona } from "@/components/creator-persona"
-import { 
-  Target, Lightbulb, 
-  Calendar, BookOpen, CalendarDays,
-  User, CheckCircle2, AlertCircle, LogOut
+import {
+  Target,
+  Lightbulb,
+  Calendar,
+  BookOpen,
+  CalendarDays,
+  Shield,
+  User,
+  CheckCircle2,
+  AlertCircle,
+  LogOut
 } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 
+type AppUser = {
+  id?: string
+  email: string
+  name: string | null
+  role?: 'MASTER' | 'ADMIN' | 'USER'
+  isActive?: boolean
+}
+
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState<"persona" | "plan" | "schedule">("persona")
   const [personaComplete, setPersonaComplete] = useState(false)
-  const [currentUser, setCurrentUser] = useState<{ email: string, name: string } | null>(null)
+  const [currentUser, setCurrentUser] = useState<AppUser | null>(null)
 
   // Check if persona is already set and user auth
   useEffect(() => {
     // Check auth
     const authData = localStorage.getItem('drucker-auth')
     if (authData) {
-      const user = JSON.parse(authData)
+      const user = JSON.parse(authData) as AppUser
       setCurrentUser(user)
       
       // Check persona for this user
@@ -53,6 +68,8 @@ export default function HomePage() {
 
     window.location.href = '/auth'
   }
+
+  const isAdmin = currentUser?.role === 'MASTER' || currentUser?.role === 'ADMIN'
 
   const tabs = [
     { 
@@ -109,6 +126,14 @@ export default function HomePage() {
                   <span className="hidden md:inline">캘린더</span>
                 </Button>
               </Link>
+              {isAdmin && (
+                <Link href="/admin">
+                  <Button variant="ghost" size="sm" className="flex items-center gap-2 text-purple-600 hover:text-purple-700">
+                    <Shield className="h-4 w-4" />
+                    <span className="hidden md:inline">관리자 센터</span>
+                  </Button>
+                </Link>
+              )}
             </div>
             
             {/* User Section */}
@@ -117,7 +142,15 @@ export default function HomePage() {
                 <>
                   <div className="text-right">
                     <p className="text-sm font-medium">{currentUser.name || '크리에이터'}</p>
-                    <p className="text-xs text-gray-500">{currentUser.email}</p>
+                    <p className="text-xs text-gray-500">
+                      {currentUser.email}
+                      {isAdmin && (
+                        <span className="ml-2 inline-flex items-center gap-1 text-[11px] text-purple-600">
+                          <Shield className="h-3 w-3" />
+                          {currentUser.role === 'MASTER' ? '마스터 관리자' : '관리자'}
+                        </span>
+                      )}
+                    </p>
                   </div>
                   <Button 
                     onClick={handleLogout}
@@ -154,6 +187,24 @@ export default function HomePage() {
                 지속가능한 콘텐츠 제작을 위해 크리에이터 페르소나를 설정하면 더 나은 추천을 받을 수 있습니다.
               </p>
             </div>
+          </div>
+        )}
+
+        {isAdmin && (
+          <div className="mb-6 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4 shadow-lg">
+            <div>
+              <p className="text-sm uppercase tracking-[0.2em] text-white/70">ADMIN CONTROL CENTER</p>
+              <h2 className="text-xl font-semibold mt-1">관리자 도구가 활성화되었습니다</h2>
+              <p className="text-sm text-white/80 mt-1">
+                회원 관리, 역할 변경, 이용 제한과 같은 작업을 관리자 센터에서 바로 실행할 수 있습니다.
+              </p>
+            </div>
+            <Link href="/admin" className="inline-flex">
+              <Button className="bg-white text-purple-700 hover:bg-white/90 flex items-center gap-2">
+                <Shield className="h-4 w-4" />
+                관리자 센터 열기
+              </Button>
+            </Link>
           </div>
         )}
 

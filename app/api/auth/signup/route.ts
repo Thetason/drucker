@@ -62,7 +62,8 @@ export async function POST(request: Request) {
         email: true,
         name: true,
         role: true,
-        createdAt: true
+        createdAt: true,
+        isActive: true
       }
     })
 

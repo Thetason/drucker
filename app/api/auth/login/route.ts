@@ -46,7 +46,9 @@ export async function POST(request: Request) {
       user: {
         id: user.id,
         email: user.email,
-        name: user.name
+        name: user.name,
+        role: user.role,
+        isActive: user.isActive
       }
     })
 

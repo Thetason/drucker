@@ -43,7 +43,9 @@ export default function AuthPage() {
       localStorage.setItem('drucker-auth', JSON.stringify({
         id: data.user.id,
         email: data.user.email,
-        name: data.user.name
+        name: data.user.name,
+        role: data.user.role,
+        isActive: data.user.isActive
       }))
 
       setMessage({ 

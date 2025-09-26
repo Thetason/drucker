@@ -167,6 +167,18 @@ export default function AdminDashboard() {
     )
   }
 
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="bg-white p-8 rounded-xl shadow-lg max-w-md w-full text-center">
+          <Shield className="h-12 w-12 text-gray-600 mx-auto mb-3" />
+          <h1 className="text-2xl font-bold">접근 권한 필요</h1>
+          <p className="text-sm text-gray-600 mt-2">{error}</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}

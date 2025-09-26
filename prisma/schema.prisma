@@ -29,6 +29,9 @@ model User {
   
   // User's tasks
   tasks     Task[]
+  
+  // Password reset requests
+  passwordResetRequests PasswordResetRequest[]
 }
 
 enum UserRole {
@@ -121,4 +124,21 @@ enum TaskPriority {
   LOW
   MEDIUM
   HIGH
+}
+
+model PasswordResetRequest {
+  id            String       @id @default(cuid())
+  userId        String
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status        ResetStatus  @default(PENDING)
+  resolverEmail String?
+  resolverNote  String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+}
+
+enum ResetStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }

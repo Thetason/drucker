@@ -12,7 +12,8 @@ import {
   RefreshCw,
   Search,
   FileText,
-  CheckCircle
+  CheckCircle,
+  Lock
 } from "lucide-react"
 
 interface UserData {
@@ -38,6 +39,20 @@ interface Stats {
   activeUsers: number
 }
 
+interface ResetRequest {
+  id: string
+  status: 'PENDING' | 'APPROVED' | 'REJECTED'
+  resolverEmail?: string | null
+  resolverNote?: string | null
+  createdAt: string
+  updatedAt: string
+  user: {
+    id: string
+    email: string
+    name: string | null
+  }
+}
+
 export default function AdminDashboard() {
   const [users, setUsers] = useState<UserData[]>([])
   const [stats, setStats] = useState<Stats | null>(null)
@@ -48,6 +63,8 @@ export default function AdminDashboard() {
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all')
   const [currentAdmin, setCurrentAdmin] = useState<{ id: string; email: string; role: 'MASTER' | 'ADMIN' } | null>(null)
   const [maxUsers, setMaxUsers] = useState<number | null>(null)
+  const [resetRequests, setResetRequests] = useState<ResetRequest[]>([])
+  const [resetsLoading, setResetsLoading] = useState(true)
 
   const fetchUsers = async () => {
     try {
@@ -83,8 +100,39 @@ export default function AdminDashboard() {
     }
   }
 
+  const fetchResetRequests = async () => {
+    try {
+      setResetsLoading(true)
+      const response = await fetch('/api/admin/password-resets', {
+        credentials: 'include'
+      })
+
+      if (response.status === 401 || response.status === 403) {
+        setError('관리자 권한이 필요합니다.')
+        setResetRequests([])
+        return
+      }
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch password reset requests')
+      }
+
+      const data = await response.json()
+      setResetRequests(data.requests || [])
+      if (!currentAdmin && data.currentUser) {
+        setCurrentAdmin(data.currentUser)
+      }
+    } catch (err) {
+      console.error('Error fetching password reset requests:', err)
+      setResetRequests([])
+    } finally {
+      setResetsLoading(false)
+    }
+  }
+
   useEffect(() => {
     fetchUsers()
+    fetchResetRequests()
   }, [])
 
   const updateUser = async (userId: string, payload: Record<string, unknown>) => {
@@ -129,6 +177,42 @@ export default function AdminDashboard() {
     updateUser(userId, { password: newPassword.trim() })
   }
 
+  const resolveReset = async (
+    requestId: string,
+    action: 'approve' | 'reject',
+    options: { note?: string; newPassword?: string } = {}
+  ) => {
+    try {
+      const response = await fetch('/api/admin/password-resets', {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          id: requestId,
+          action,
+          note: options.note,
+          newPassword: options.newPassword
+        })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || '요청을 처리하지 못했습니다.')
+      }
+
+      await fetchResetRequests()
+
+      if (data.temporaryPassword) {
+        alert(`임시 비밀번호가 발급되었습니다.\n사용자에게 다음 비밀번호를 전달하세요: ${data.temporaryPassword}`)
+      }
+    } catch (err: any) {
+      alert(err.message || '요청을 처리하지 못했습니다.')
+    }
+  }
+
   // 필터링된 사용자 목록
   const filteredUsers = users
     .filter(user => {
@@ -155,6 +239,8 @@ export default function AdminDashboard() {
       default: return 'bg-gray-100 text-gray-700 border-gray-300'
     }
   }
+
+  const pendingResetCount = resetRequests.filter(request => request.status === 'PENDING').length
 
   if (loading) {
     return (
@@ -207,7 +293,7 @@ export default function AdminDashboard() {
       <main className="max-w-7xl mx-auto px-4 py-8">
         {/* Stats Cards */}
         {stats && (
-          <div className="grid grid-cols-6 gap-4 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
             <div className="bg-white p-4 rounded-xl border">
               <div className="flex items-center justify-between">
                 <div>
@@ -277,6 +363,16 @@ export default function AdminDashboard() {
                   </p>
                 </div>
                 <AlertCircle className="h-8 w-8 text-red-400" />
+              </div>
+            </div>
+
+            <div className="bg-yellow-50 p-4 rounded-xl border border-yellow-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-yellow-700">대기 중 재설정</p>
+                  <p className="text-2xl font-bold text-yellow-800">{pendingResetCount}</p>
+                </div>
+                <Lock className="h-8 w-8 text-yellow-500" />
               </div>
             </div>
           </div>
@@ -430,6 +526,108 @@ export default function AdminDashboard() {
             </div>
           )}
         </div>
+
+        <section className="mt-8 bg-white rounded-xl border">
+          <div className="px-6 py-4 border-b flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold">비밀번호 재설정 요청</h2>
+              <p className="text-sm text-gray-500">사용자가 요청한 비밀번호 재설정을 승인하거나 거절할 수 있습니다.</p>
+            </div>
+          </div>
+
+          {resetsLoading ? (
+            <div className="py-10 text-center text-gray-500">로딩 중...</div>
+          ) : resetRequests.length === 0 ? (
+            <div className="py-12 text-center text-gray-500">대기 중인 비밀번호 재설정 요청이 없습니다.</div>
+          ) : (
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">사용자</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">요청일</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">상태</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">처리 내용</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">작업</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {resetRequests.map((request) => {
+                  const isPending = request.status === 'PENDING'
+                  const statusBadge = (() => {
+                    switch (request.status) {
+                      case 'APPROVED':
+                        return 'bg-green-100 text-green-700'
+                      case 'REJECTED':
+                        return 'bg-red-100 text-red-700'
+                      default:
+                        return 'bg-yellow-100 text-yellow-700'
+                    }
+                  })()
+
+                  return (
+                    <tr key={request.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4">
+                        <div>
+                          <p className="font-medium">{request.user.name || '이름 없음'}</p>
+                          <p className="text-sm text-gray-500">{request.user.email}</p>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-600">
+                        {new Date(request.createdAt).toLocaleString('ko-KR')}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${statusBadge}`}>
+                          {request.status === 'PENDING' ? '대기' : request.status === 'APPROVED' ? '승인' : '거절'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-600">
+                        {request.resolverEmail ? (
+                          <div className="space-y-1">
+                            <p>처리자: {request.resolverEmail}</p>
+                            {request.resolverNote && <p className="text-xs text-gray-500">메모: {request.resolverNote}</p>}
+                            <p className="text-xs text-gray-500">{new Date(request.updatedAt).toLocaleString('ko-KR')} 처리</p>
+                          </div>
+                        ) : (
+                          <span className="text-gray-400">-</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 space-x-2">
+                        {isPending ? (
+                          <>
+                            <button
+                              onClick={() => {
+                                const newPassword = window.prompt('새 비밀번호를 입력하거나 비워두면 자동으로 생성됩니다. (최소 8자)')?.trim()
+                                const note = window.prompt('승인 메모를 입력하세요 (선택 사항)')?.trim()
+                                resolveReset(request.id, 'approve', {
+                                  newPassword: newPassword || undefined,
+                                  note: note || undefined
+                                })
+                              }}
+                              className="px-3 py-1 rounded text-xs font-medium bg-green-100 text-green-700 hover:bg-green-200"
+                            >
+                              승인
+                            </button>
+                            <button
+                              onClick={() => {
+                                const note = window.prompt('거절 사유를 입력하세요 (선택 사항)')?.trim()
+                                resolveReset(request.id, 'reject', { note: note || undefined })
+                              }}
+                              className="px-3 py-1 rounded text-xs font-medium bg-red-100 text-red-700 hover:bg-red-200"
+                            >
+                              거절
+                            </button>
+                          </>
+                        ) : (
+                          <span className="text-xs text-gray-400">처리 완료</span>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          )}
+        </section>
       </main>
     </div>
   )

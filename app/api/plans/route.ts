@@ -2,6 +2,32 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { cookies } from 'next/headers'
 
+const toStringOrDefault = (value: unknown, fallback = ''): string => {
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    return trimmed.length > 0 ? trimmed : fallback
+  }
+  return fallback
+}
+
+const coerceJson = (primary: unknown, secondary: unknown, fallback: any) => {
+  if (primary !== undefined && primary !== null) return primary
+  if (secondary !== undefined && secondary !== null) return secondary
+  return fallback
+}
+
+const buildMetadata = (data: any) => ({
+  storyType: data.storyType ?? null,
+  story: data.story ?? null,
+  retention: data.retention ?? null,
+  retentionEnabled: data.retentionEnabled ?? null,
+  dmKeyword: data.dmKeyword ?? null,
+  cta: data.cta ?? null,
+  contentMix: data.contentMix ?? null,
+  script: data.script ?? null,
+  altTitle: data.altTitle ?? null
+})
+
 // GET: 사용자 기획서 목록 조회
 export async function GET() {
   try {
@@ -52,29 +78,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '사용자를 찾을 수 없습니다' }, { status: 404 })
     }
 
-    const metadata = {
-      storyType: data.storyType ?? null,
-      story: data.story ?? null,
-      retention: data.retention ?? null,
-      retentionEnabled: data.retentionEnabled ?? null,
-      dmKeyword: data.dmKeyword ?? null,
-      cta: data.cta ?? null,
-      contentMix: data.contentMix ?? null,
-      script: data.script ?? null,
-      altTitle: data.altTitle ?? null
-    }
+    const metadata = buildMetadata(data)
 
     const plan = await prisma.contentPlan.create({
       data: {
         userId: user.id,
-        title: data.title,
-        platform: data.platform,
-        targetAudience: data.targetAudience || data.target,
-        hook: data.hook,
-        mainContent: data.mainContent || data.story || [],
-        keywords: data.keywords || data.thumbnailKeywords || [],
-        duration: data.duration,
-        goal: data.goal,
+        title: toStringOrDefault(data.title, '제목 없는 기획'),
+        platform: toStringOrDefault(data.platform, 'custom'),
+        targetAudience: toStringOrDefault(data.targetAudience ?? data.target, ''),
+        hook: toStringOrDefault(data.hook, ''),
+        mainContent: coerceJson(data.mainContent, data.story, []),
+        keywords: coerceJson(data.keywords, data.thumbnailKeywords, []),
+        duration: toStringOrDefault(data.duration, ''),
+        goal: toStringOrDefault(data.goal, ''),
         metadata
       }
     })
@@ -122,29 +138,19 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: '기획서를 찾을 수 없습니다' }, { status: 404 })
     }
 
-    const metadata = {
-      storyType: data.storyType ?? null,
-      story: data.story ?? null,
-      retention: data.retention ?? null,
-      retentionEnabled: data.retentionEnabled ?? null,
-      dmKeyword: data.dmKeyword ?? null,
-      cta: data.cta ?? null,
-      contentMix: data.contentMix ?? null,
-      script: data.script ?? null,
-      altTitle: data.altTitle ?? null
-    }
+    const metadata = buildMetadata(data)
 
     const plan = await prisma.contentPlan.update({
       where: { id: data.id },
       data: {
-        title: data.title,
-        platform: data.platform,
-        targetAudience: data.targetAudience || data.target,
-        hook: data.hook,
-        mainContent: data.mainContent || data.story || [],
-        keywords: data.keywords || data.thumbnailKeywords || [],
-        duration: data.duration,
-        goal: data.goal,
+        title: toStringOrDefault(data.title, existingPlan.title),
+        platform: toStringOrDefault(data.platform, existingPlan.platform),
+        targetAudience: toStringOrDefault(data.targetAudience ?? data.target, existingPlan.targetAudience ?? ''),
+        hook: toStringOrDefault(data.hook, existingPlan.hook ?? ''),
+        mainContent: coerceJson(data.mainContent, data.story, existingPlan.mainContent || []),
+        keywords: coerceJson(data.keywords, data.thumbnailKeywords, existingPlan.keywords || []),
+        duration: toStringOrDefault(data.duration, existingPlan.duration ?? ''),
+        goal: toStringOrDefault(data.goal, existingPlan.goal ?? ''),
         metadata
       }
     })

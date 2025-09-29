@@ -28,56 +28,64 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         {children}
-        <script dangerouslySetInnerHTML={{
-          __html: `
-            // vocal202065@gmail.com 페르소나 데이터 보호
-            (function() {
-              const PROTECTED_EMAIL = 'vocal202065@gmail.com';
-              const PERSONA_KEY = 'drucker-persona-' + PROTECTED_EMAIL;
-              const BACKUP_KEY = PERSONA_KEY + '-backup';
-              
-              // 현재 로그인된 사용자 확인
-              const authData = localStorage.getItem('drucker-auth');
-              if (authData) {
-                const user = JSON.parse(authData);
-                if (user.email === PROTECTED_EMAIL) {
-                  // 현재 데이터 백업
-                  const currentData = localStorage.getItem(PERSONA_KEY);
-                  if (currentData) {
-                    // 데이터가 있으면 백업
-                    localStorage.setItem(BACKUP_KEY, currentData);
-                    console.log('✅ 페르소나 데이터 백업 완료');
-                    
-                    // 데이터 내용 확인
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              // vocal202065@gmail.com 페르소나 데이터 보호
+              (function() {
+                try {
+                  if (typeof window === 'undefined' || !window.localStorage) {
+                    return;
+                  }
+
+                  const PROTECTED_EMAIL = 'vocal202065@gmail.com';
+                  const PERSONA_KEY = 'drucker-persona-' + PROTECTED_EMAIL;
+                  const BACKUP_KEY = PERSONA_KEY + '-backup';
+
+                  const authData = window.localStorage.getItem('drucker-auth');
+                  if (authData) {
                     try {
-                      const persona = JSON.parse(currentData);
-                      console.log('현재 페르소나:', persona.name || '이름 없음');
-                    } catch (e) {
-                      console.error('페르소나 데이터 파싱 오류');
-                    }
-                  } else {
-                    // 백업에서 복구 시도
-                    const backupData = localStorage.getItem(BACKUP_KEY);
-                    if (backupData) {
-                      localStorage.setItem(PERSONA_KEY, backupData);
-                      console.log('✅ 백업에서 페르소나 데이터 복구');
+                      const user = JSON.parse(authData);
+                      if (user?.email === PROTECTED_EMAIL) {
+                        const currentData = window.localStorage.getItem(PERSONA_KEY);
+                        if (currentData) {
+                          window.localStorage.setItem(BACKUP_KEY, currentData);
+                          console.log('✅ 페르소나 데이터 백업 완료');
+
+                          try {
+                            const persona = JSON.parse(currentData);
+                            console.log('현재 페르소나:', persona?.name || '이름 없음');
+                          } catch (parseError) {
+                            console.warn('페르소나 데이터 파싱 오류:', parseError);
+                          }
+                        } else {
+                          const backupData = window.localStorage.getItem(BACKUP_KEY);
+                          if (backupData) {
+                            window.localStorage.setItem(PERSONA_KEY, backupData);
+                            console.log('✅ 백업에서 페르소나 데이터 복구');
+                          }
+                        }
+                      }
+                    } catch (parseAuthError) {
+                      console.warn('Auth 데이터 파싱 오류:', parseAuthError);
                     }
                   }
+
+                  const originalRemoveItem = window.localStorage.removeItem;
+                  window.localStorage.removeItem = function(key) {
+                    if (key === PERSONA_KEY) {
+                      console.warn('⚠️ 페르소나 데이터 삭제 시도가 차단되었습니다');
+                      return;
+                    }
+                    return originalRemoveItem.call(this, key);
+                  };
+                } catch (error) {
+                  console.warn('Persona 보호 스크립트 오류:', error);
                 }
-              }
-              
-              // 데이터 삭제 방지
-              const originalRemoveItem = localStorage.removeItem;
-              localStorage.removeItem = function(key) {
-                if (key === PERSONA_KEY) {
-                  console.warn('⚠️ 페르소나 데이터 삭제 시도가 차단되었습니다');
-                  return;
-                }
-                return originalRemoveItem.call(this, key);
-              };
-            })();
-          `
-        }} />
+              })();
+            `,
+          }}
+        />
       </body>
     </html>
   );

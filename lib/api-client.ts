@@ -184,11 +184,17 @@ export const personaAPI = {
         writeStorage('drucker-persona', normalized)
         return normalized
       }
-      return null
+      const emptyPersona = createEmptyPersona()
+      writeStorage('drucker-persona', emptyPersona)
+      return emptyPersona
     } catch (error) {
       console.error('페르소나 조회 오류:', error)
       const stored = readStorage('drucker-persona', null as any)
-      return stored ? normalizePersona(stored) : null
+      const normalized = stored ? normalizePersona(stored) : null
+      if (normalized) return normalized
+      const emptyPersona = createEmptyPersona()
+      writeStorage('drucker-persona', emptyPersona)
+      return emptyPersona
     }
   },
 

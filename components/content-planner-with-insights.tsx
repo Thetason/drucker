@@ -346,7 +346,7 @@ const buildPlanPayload = (plan: ContentPlan) => ({
 })
 
 export function ContentPlannerWithInsights() {
-  const [persona, setPersona] = useState<any>(null)
+  const [persona, setPersona] = useState<any>(personaAPI.empty())
   const [plan, setPlan] = useState<ContentPlan>(() => createEmptyPlan())
 
   const [savedPlans, setSavedPlans] = useState<ContentPlan[]>([])

@@ -68,26 +68,7 @@ interface CreatorPersonaProps {
 
 export function CreatorPersona({ onPersonaComplete }: CreatorPersonaProps = {}) {
   const [step, setStep] = useState(1)
-  const [persona, setPersona] = useState<PersonaData>({
-    name: '',
-    tagline: '',
-    whatICanDo: [],
-    whatILove: [],
-    whoIWantToTalkTo: '',
-    monetizationPlan: [],
-    expertise: [],
-    experience: '',
-    personality: [],
-    contentStyle: '',
-    targetAge: '',
-    targetInterests: [],
-    targetPainPoints: [],
-    primaryPlatform: [],
-    contentFrequency: '',
-    contentTopics: [],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  })
+  const [persona, setPersona] = useState<PersonaData>(personaAPI.empty())
 
   const [isComplete, setIsComplete] = useState(false)
   const [suggestions, setSuggestions] = useState<string[]>([])
@@ -112,7 +93,7 @@ export function CreatorPersona({ onPersonaComplete }: CreatorPersonaProps = {}) 
       // 먼저 DB에서 시도
       const dbPersona = await personaAPI.get()
       if (dbPersona) {
-        setPersona(dbPersona)
+        setPersona({ ...personaAPI.empty(), ...dbPersona })
         setIsComplete(true)
         // localStorage 백업 업데이트
         const currentUser = getCurrentUser()
@@ -127,13 +108,21 @@ export function CreatorPersona({ onPersonaComplete }: CreatorPersonaProps = {}) 
           const personaKey = `drucker-persona-${currentUser.email}`
           const saved = localStorage.getItem(personaKey)
           if (saved) {
-            const savedPersona = JSON.parse(saved)
-            setPersona(savedPersona)
-            setIsComplete(true)
-            // DB에 저장 시도
-            personaAPI.save(savedPersona)
+            try {
+              const savedPersona = JSON.parse(saved)
+              const normalized = { ...personaAPI.empty(), ...savedPersona }
+              setPersona(normalized)
+              setIsComplete(true)
+              // DB에 저장 시도
+              await personaAPI.save(normalized)
+              return
+            } catch (error) {
+              console.warn('로컬 페르소나 복구 실패:', error)
+            }
           }
         }
+        setPersona(personaAPI.empty())
+        setIsComplete(false)
       }
     }
     loadPersona()

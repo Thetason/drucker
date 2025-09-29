@@ -67,6 +67,111 @@ const readStorage = <T>(base: string, fallback: T): T => {
   }
 }
 
+const createEmptyPersona = () => ({
+  name: '',
+  tagline: '',
+  whatICanDo: [] as string[],
+  whatILove: [] as string[],
+  whoIWantToTalkTo: '',
+  monetizationPlan: [] as string[],
+  expertise: [] as string[],
+  experience: '',
+  personality: [] as string[],
+  contentStyle: '',
+  targetAge: '',
+  targetInterests: [] as string[],
+  targetPainPoints: [] as string[],
+  primaryPlatform: [] as string[],
+  contentFrequency: '',
+  contentTopics: [] as string[],
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString()
+})
+
+const valueToArray = (value: unknown): string[] => {
+  if (!value) return []
+  if (Array.isArray(value)) {
+    return value
+      .map(item => (typeof item === 'string' ? item.trim() : ''))
+      .filter(Boolean)
+  }
+  if (typeof value === 'string') {
+    return value
+      .split(',')
+      .map(item => item.trim())
+      .filter(Boolean)
+  }
+  if (typeof value === 'object') {
+    return Object.values(value as Record<string, unknown>)
+      .map(item => (typeof item === 'string' ? item.trim() : ''))
+      .filter(Boolean)
+  }
+  return []
+}
+
+const valueToString = (value: unknown): string => {
+  if (!value) return ''
+  if (typeof value === 'string') return value
+  if (Array.isArray(value)) {
+    return value
+      .map(item => (typeof item === 'string' ? item : ''))
+      .filter(Boolean)
+      .join(', ')
+  }
+  if (typeof value === 'object') {
+    return Object.values(value as Record<string, unknown>)
+      .map(item => (typeof item === 'string' ? item : ''))
+      .filter(Boolean)
+      .join(', ')
+  }
+  return ''
+}
+
+const normalizePersona = (raw: any) => {
+  if (!raw) return null
+  const base = createEmptyPersona()
+  return {
+    ...base,
+    name: typeof raw.name === 'string' ? raw.name : '',
+    tagline: typeof raw.tagline === 'string' ? raw.tagline : '',
+    whatICanDo: valueToArray(raw.whatICanDo),
+    whatILove: valueToArray(raw.whatILove),
+    whoIWantToTalkTo: valueToString(raw.whoIWantToTalkTo ?? raw.whoCanIHelp),
+    monetizationPlan: valueToArray(raw.monetizationPlan),
+    expertise: valueToArray(raw.expertise),
+    experience: typeof raw.experience === 'string' ? raw.experience : '',
+    personality: valueToArray(raw.personality),
+    contentStyle: typeof raw.contentStyle === 'string' ? raw.contentStyle : '',
+    targetAge: typeof raw.targetAge === 'string' ? raw.targetAge : '',
+    targetInterests: valueToArray(raw.targetInterests),
+    targetPainPoints: valueToArray(raw.targetPainPoints),
+    primaryPlatform: valueToArray(raw.primaryPlatform),
+    contentFrequency: typeof raw.contentFrequency === 'string' ? raw.contentFrequency : '',
+    contentTopics: valueToArray(raw.contentTopics),
+    createdAt: typeof raw.createdAt === 'string' ? raw.createdAt : base.createdAt,
+    updatedAt: typeof raw.updatedAt === 'string' ? raw.updatedAt : base.updatedAt
+  }
+}
+
+const serializePersona = (persona: any) => ({
+  name: persona?.name || '',
+  tagline: persona?.tagline || '',
+  whatICanDo: Array.isArray(persona?.whatICanDo) ? persona.whatICanDo : [],
+  whatILove: Array.isArray(persona?.whatILove) ? persona.whatILove : [],
+  whoCanIHelp: persona?.whoIWantToTalkTo || persona?.whoCanIHelp || '',
+  monetizationPlan: Array.isArray(persona?.monetizationPlan) ? persona.monetizationPlan : [],
+  expertise: Array.isArray(persona?.expertise) ? persona.expertise : [],
+  experience: persona?.experience || '',
+  personality: Array.isArray(persona?.personality) ? persona.personality : [],
+  contentStyle: persona?.contentStyle || '',
+  targetAge: persona?.targetAge || '',
+  targetInterests: Array.isArray(persona?.targetInterests) ? persona.targetInterests : [],
+  targetPainPoints: Array.isArray(persona?.targetPainPoints) ? persona.targetPainPoints : [],
+  primaryPlatform: Array.isArray(persona?.primaryPlatform) ? persona.primaryPlatform : [],
+  contentFrequency: persona?.contentFrequency || '',
+  contentTopics: Array.isArray(persona?.contentTopics) ? persona.contentTopics : []
+})
+
 // 페르소나 API
 export const personaAPI = {
   async get() {
@@ -74,11 +179,16 @@ export const personaAPI = {
       const response = await fetch('/api/persona', withCredentials())
       if (!response.ok) throw new Error('Failed to fetch persona')
       const data = await response.json()
-      writeStorage('drucker-persona', data.persona)
-      return data.persona
+      const normalized = normalizePersona(data.persona)
+      if (normalized) {
+        writeStorage('drucker-persona', normalized)
+        return normalized
+      }
+      return null
     } catch (error) {
       console.error('페르소나 조회 오류:', error)
-      return readStorage('drucker-persona', null)
+      const stored = readStorage('drucker-persona', null as any)
+      return stored ? normalizePersona(stored) : null
     }
   },
 
@@ -86,19 +196,25 @@ export const personaAPI = {
     try {
       const response = await fetch('/api/persona', withCredentials({
         method: 'POST',
-        body: JSON.stringify(persona)
+        body: JSON.stringify(serializePersona(persona))
       }))
 
       if (!response.ok) throw new Error('Failed to save persona')
       const data = await response.json()
-      writeStorage('drucker-persona', data.persona)
-      return data.persona
+      const normalized = normalizePersona(data.persona)
+      if (normalized) {
+        writeStorage('drucker-persona', normalized)
+        return normalized
+      }
+      return persona
     } catch (error) {
       console.error('페르소나 저장 오류:', error)
       writeStorage('drucker-persona', persona)
       return persona
     }
-  }
+  },
+
+  empty: createEmptyPersona
 }
 
 // 기획서 API

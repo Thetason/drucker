@@ -100,7 +100,7 @@ const normalizeTask = (task: any): Task => {
     id: task.id,
     title: task.title || '제목 없는 일정',
     description: task.description || '',
-    date: task.date || new Date().toISOString().split('T')[0],
+    date: task.date || formatDateKey(new Date()),
     startTime: task.startTime || '',
     endTime: task.endTime || '',
     status: (task.status || 'pending') as Task['status'],
@@ -127,7 +127,7 @@ const createEmptyDraft = (options: PlanOption[], date?: string): TaskDraft => {
     title: defaultPlan?.title || '',
     planId: defaultPlan?.id || '',
     planPlatform: defaultPlan?.platform,
-    date: date || new Date().toISOString().split('T')[0],
+    date: date || formatDateKey(new Date()),
     startTime: '',
     endTime: '',
     status: 'pending',
@@ -156,6 +156,12 @@ const createDraftFromTask = (task: Task): TaskDraft => ({
   notes: task.description || '',
   color: task.color || getPlatformColor(task.planPlatform)
 })
+
+const formatDateKey = (date: Date) => {
+  const offsetInMinutes = date.getTimezoneOffset()
+  const adjusted = new Date(date.getTime() - offsetInMinutes * 60000)
+  return adjusted.toISOString().split('T')[0]
+}
 
 export default function SchedulePage() {
   const [currentDate, setCurrentDate] = useState(new Date())
@@ -472,7 +478,7 @@ export default function SchedulePage() {
       days.push({
         date: prevDate,
         isCurrentMonth: false,
-        dateString: prevDate.toISOString().split('T')[0]
+        dateString: formatDateKey(prevDate)
       })
     }
 
@@ -482,7 +488,7 @@ export default function SchedulePage() {
       days.push({
         date: currentDate,
         isCurrentMonth: true,
-        dateString: currentDate.toISOString().split('T')[0]
+        dateString: formatDateKey(currentDate)
       })
     }
 
@@ -493,7 +499,7 @@ export default function SchedulePage() {
       days.push({
         date: nextDate,
         isCurrentMonth: false,
-        dateString: nextDate.toISOString().split('T')[0]
+        dateString: formatDateKey(nextDate)
       })
     }
 
@@ -502,6 +508,7 @@ export default function SchedulePage() {
 
   const calendarDays = getDaysInMonth(currentDate)
   const weekDays = ['일', '월', '화', '수', '목', '금', '토']
+  const todayKey = formatDateKey(new Date())
 
   const getTasksForDate = (dateString: string) => {
     return tasks.filter(task => task.date === dateString)
@@ -633,7 +640,7 @@ export default function SchedulePage() {
 
               {/* 새 일정 추가 */}
               <button
-                onClick={() => openNewTask(new Date().toISOString().split('T')[0])}
+                onClick={() => openNewTask(formatDateKey(new Date()))}
                 disabled={!hasPlans}
                 className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
                   hasPlans ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-700 cursor-not-allowed'
@@ -785,7 +792,7 @@ export default function SchedulePage() {
                 <div className="grid grid-cols-7 gap-2">
                   {calendarDays.map((day, index) => {
                     const dayTasks = getTasksForDate(day.dateString)
-                    const isToday = day.dateString === new Date().toISOString().split('T')[0]
+                    const isToday = day.dateString === todayKey
 
                     return (
                       <div
@@ -859,7 +866,7 @@ export default function SchedulePage() {
                 <h2 className="text-xl font-semibold">오늘의 일정</h2>
                 <button
                   type="button"
-                  onClick={() => openNewTask(new Date().toISOString().split('T')[0])}
+                  onClick={() => openNewTask(formatDateKey(new Date()))}
                   className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm transition-colors"
                   disabled={!hasPlans}
                 >
@@ -867,7 +874,7 @@ export default function SchedulePage() {
                 </button>
               </div>
               <div className="space-y-4">
-                {getTasksForDate(new Date().toISOString().split('T')[0]).map(task => (
+                {getTasksForDate(todayKey).map(task => (
                   <div key={task.id} className="bg-gray-900/40 rounded-lg p-4 border border-gray-700">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
@@ -915,7 +922,7 @@ export default function SchedulePage() {
                     </div>
                   </div>
                 ))}
-                {getTasksForDate(new Date().toISOString().split('T')[0]).length === 0 && (
+                {getTasksForDate(todayKey).length === 0 && (
                   <p className="text-gray-400 text-center py-8">오늘은 예정된 일정이 없습니다</p>
                 )}
               </div>

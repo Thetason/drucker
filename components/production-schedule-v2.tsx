@@ -96,6 +96,12 @@ const normalizeSavedPlan = (plan: any): SavedPlan | null => {
   }
 }
 
+const formatDateKey = (date: Date) => {
+  const offsetInMinutes = date.getTimezoneOffset()
+  const adjusted = new Date(date.getTime() - offsetInMinutes * 60000)
+  return adjusted.toISOString().split('T')[0]
+}
+
 // 알림 시간 옵션
 const reminderOptions = {
   'ontime': '정시',
@@ -288,7 +294,7 @@ export function ProductionScheduleV2() {
         planId: draggedPlan.id,
         title: draggedPlan.title,
         stage: 'planning',
-        dueDate: defaultDeadline.toISOString().split('T')[0],
+        dueDate: formatDateKey(defaultDeadline),
         dueTime: '18:00', // Default 6 PM
         reminder: true,
         reminderTime: '1day',

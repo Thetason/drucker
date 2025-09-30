@@ -10,6 +10,7 @@ import {
   CheckSquare, XCircle, RefreshCw, BellRing,
   CalendarClock, Zap, Shield, Award, Minus
 } from "lucide-react"
+import { plansAPI } from "@/lib/api-client"
 
 interface Task {
   id: string
@@ -23,7 +24,7 @@ interface Task {
   notes: string
   completed: boolean
   completedAt?: string  // 완료 시간
-  platform?: 'youtube' | 'shorts' | 'reels'
+  platform?: string
   target?: string
   hook?: string
   priority?: 'low' | 'medium' | 'high' | 'urgent'  // 우선순위
@@ -38,12 +39,61 @@ interface Task {
 interface SavedPlan {
   id: string
   title: string
-  platform: 'youtube' | 'shorts' | 'reels'
+  platform: string
   target: string
   hook: string
   goal: string
   duration: string
   updatedAt: string
+}
+
+const parseMetadata = (raw: unknown): Record<string, any> => {
+  if (!raw) return {}
+  if (typeof raw === 'string') {
+    try {
+      return JSON.parse(raw) as Record<string, any>
+    } catch {
+      return {}
+    }
+  }
+  if (typeof raw === 'object') {
+    return raw as Record<string, any>
+  }
+  return {}
+}
+
+const createFallbackId = () => {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+    return crypto.randomUUID()
+  }
+  return `plan-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+}
+
+const normalizeSavedPlan = (plan: any): SavedPlan | null => {
+  if (!plan || typeof plan !== 'object') return null
+
+  const metadata = parseMetadata((plan as any).metadata)
+  const rawPlatform = (plan.platform ?? metadata.planPlatform ?? 'custom')
+  const platform = typeof rawPlatform === 'string' && rawPlatform.trim().length > 0
+    ? rawPlatform.toLowerCase()
+    : 'custom'
+
+  const updatedAtSource = plan.updatedAt || metadata.updatedAt || plan.createdAt
+
+  return {
+    id: typeof plan.id === 'string' && plan.id.trim().length > 0
+      ? plan.id
+      : String(plan.id ?? createFallbackId()),
+    title: plan.title || plan.goal || metadata.title || '제목 없는 기획서',
+    platform,
+    target: plan.targetAudience || plan.target || metadata.target || '',
+    hook: plan.hook || metadata.cta || '',
+    goal: plan.goal || '',
+    duration: plan.duration || metadata.duration || '',
+    updatedAt: typeof updatedAtSource === 'string' && updatedAtSource.length > 0
+      ? updatedAtSource
+      : new Date().toISOString()
+  }
 }
 
 // 알림 시간 옵션
@@ -101,23 +151,48 @@ export function ProductionScheduleV2() {
     complete: { label: "완료", color: "bg-purple-500", icon: <CheckCircle />, borderColor: "border-purple-500" }
   }
 
-  const platformIcons = {
+  const platformIcons: Record<string, string> = {
     youtube: '📺',
     shorts: '📱',
-    reels: '🎬'
+    reels: '🎬',
+    instagram: '📸',
+    tiktok: '🎵',
+    custom: '🗂️'
+  }
+
+  const getPlatformIcon = (platform?: string) => {
+    if (!platform) return platformIcons.custom
+    return platformIcons[platform] ?? platformIcons.custom
   }
 
   // Load saved plans from localStorage
   useEffect(() => {
-    const plans = localStorage.getItem('drucker-plans')
-    if (plans) {
-      setSavedPlans(JSON.parse(plans))
+    const loadData = async () => {
+      try {
+        const planList = await plansAPI.getAll()
+        const normalized = Array.isArray(planList)
+          ? planList
+              .map(normalizeSavedPlan)
+              .filter((plan): plan is SavedPlan => Boolean(plan))
+              .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+          : []
+        setSavedPlans(normalized)
+      } catch (error) {
+        console.error('기획서 라이브러리 불러오기 실패:', error)
+        setSavedPlans([])
+      }
+
+      const savedTasks = localStorage.getItem('drucker-tasks')
+      if (savedTasks) {
+        try {
+          setTasks(JSON.parse(savedTasks))
+        } catch (error) {
+          console.error('로컬 작업 데이터 파싱 실패:', error)
+        }
+      }
     }
 
-    const savedTasks = localStorage.getItem('drucker-tasks')
-    if (savedTasks) {
-      setTasks(JSON.parse(savedTasks))
-    }
+    loadData()
   }, [])
 
   // Save tasks to localStorage
@@ -513,7 +588,7 @@ export function ProductionScheduleV2() {
                       className="p-3 bg-gray-50 rounded-lg cursor-move hover:bg-gray-100 transition-colors border-2 border-transparent hover:border-blue-300"
                     >
                       <div className="flex items-start gap-2">
-                        <span className="text-lg mt-0.5">{platformIcons[plan.platform]}</span>
+                        <span className="text-lg mt-0.5">{getPlatformIcon(plan.platform)}</span>
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-sm truncate">{plan.title}</p>
                           <p className="text-xs text-gray-500 truncate">{plan.target}</p>
@@ -698,7 +773,7 @@ export function ProductionScheduleV2() {
                       <div className="flex-1">
                         <div className="flex items-start gap-3">
                           {task.platform && (
-                            <span className="text-2xl">{platformIcons[task.platform]}</span>
+                            <span className="text-2xl">{getPlatformIcon(task.platform)}</span>
                           )}
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">

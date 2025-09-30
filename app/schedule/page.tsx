@@ -179,10 +179,15 @@ export default function SchedulePage() {
 
     const loadData = async () => {
       try {
-        const [plans, tasks] = await Promise.all([
-          plansAPI.getAll(),
-          tasksAPI.getAll()
-        ])
+        const plans = await plansAPI.getAll().catch(error => {
+          console.error('기획서 불러오기 실패:', error)
+          return []
+        })
+
+        const tasks = await tasksAPI.getAll().catch(error => {
+          console.error('작업 불러오기 실패:', error)
+          return []
+        })
 
         const mappedPlans: PlanOption[] = Array.isArray(plans)
           ? plans
@@ -679,150 +684,242 @@ export default function SchedulePage() {
           </div>
         </div>
 
-        {/* 캘린더 */}
-        {viewMode === 'month' && (
-          <div className="bg-gray-800 rounded-lg p-4">
-            {/* 요일 헤더 */}
-            <div className="grid grid-cols-7 gap-2 mb-2">
-              {weekDays.map(day => (
-                <div key={day} className="text-center text-sm font-semibold text-gray-400 py-2">
-                  {day}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          <div className="space-y-6">
+            <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-lg font-semibold">기획서 라이브러리</h2>
+                  <p className="text-xs text-gray-400 mt-1">저장된 기획서를 클릭하면 일정 편집기가 열립니다.</p>
                 </div>
-              ))}
-            </div>
+                <div className="text-sm text-gray-400 whitespace-nowrap">
+                  {planOptions.length}개
+                </div>
+              </div>
 
-            {/* 날짜 그리드 */}
-            <div className="grid grid-cols-7 gap-2">
-              {calendarDays.map((day, index) => {
-                const dayTasks = getTasksForDate(day.dateString)
-                const isToday = day.dateString === new Date().toISOString().split('T')[0]
-
-                return (
-                  <div
-                    key={index}
-                    onDragOver={handleDragOver}
-                    onDrop={(e) => handleDrop(e, day.dateString)}
-                    onDoubleClick={() => openNewTask(day.dateString)}
-                    onContextMenu={(e) => {
-                      e.preventDefault()
-                      openNewTask(day.dateString)
-                    }}
-                    className={`min-h-[120px] p-2 rounded-lg border transition-colors ${
-                      day.isCurrentMonth 
-                        ? 'bg-gray-700 border-gray-600 hover:border-blue-500' 
-                        : 'bg-gray-800 border-gray-700 opacity-50'
-                    } ${isToday ? 'ring-2 ring-blue-500' : ''}`}
-                  >
-                    <div className={`text-sm font-semibold mb-1 ${
-                      isToday ? 'text-blue-400' : day.isCurrentMonth ? 'text-white' : 'text-gray-500'
-                    }`}>
-                      {day.date.getDate()}
-                    </div>
-
-                    {/* 태스크 목록 */}
-                    <div className="space-y-1">
-                      {dayTasks.slice(0, 3).map(task => (
-                        <div
-                          key={task.id}
-                          draggable
-                          onDragStart={(e) => handleDragStart(e, task)}
-                          onClick={() => openExistingTask(task)}
-                          className="text-xs p-1 rounded cursor-move hover:opacity-80 transition-opacity"
-                          style={{ backgroundColor: task.color || '#6b7280' }}
-                          title={task.planTitle ? `${task.title} · ${task.planTitle}` : task.title}
-                        >
-                          <div className="flex items-center gap-1">
-                            <span>{getPriorityIcon(task.priority)}</span>
-                            <span className="truncate">{task.title}</span>
-                          </div>
-                          {task.planTitle && task.planTitle !== task.title && (
-                            <div className="text-[10px] opacity-80 truncate">
-                              {task.planTitle}
-                            </div>
-                          )}
-                          {task.startTime && (
-                            <div className="text-xs opacity-75">{task.startTime}</div>
+              {hasPlans ? (
+                <div className="mt-4 space-y-2">
+                  {planOptions.map((plan) => (
+                    <button
+                      key={plan.id}
+                      type="button"
+                      onClick={() => {
+                        setEditorMode('create')
+                        const baseDraft = createEmptyDraft(planOptions)
+                        setDraft({
+                          ...baseDraft,
+                          planId: plan.id,
+                          planPlatform: plan.platform,
+                          title: plan.title,
+                          color: getPlatformColor(plan.platform)
+                        })
+                        setIsEditorOpen(true)
+                      }}
+                      className="w-full text-left bg-gray-900/40 hover:bg-gray-900 border border-gray-700 hover:border-blue-500 rounded-lg px-3 py-2.5 transition-all"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-white truncate">{plan.title}</p>
+                          {plan.hook && (
+                            <p className="text-xs text-gray-400 mt-1 line-clamp-2">{plan.hook}</p>
                           )}
                         </div>
-                      ))}
-                      {dayTasks.length > 3 && (
-                        <div className="text-xs text-gray-400 text-center">
-                          +{dayTasks.length - 3} more
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* 주간/일간 뷰는 간단히 표시 */}
-        {viewMode !== 'month' && (
-          <div className="bg-gray-800 rounded-lg p-8 text-center">
-            <Calendar className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-            <p className="text-gray-400">
-              {viewMode === 'week' ? '주간' : '일간'} 뷰는 준비 중입니다
-            </p>
-          </div>
-        )}
-
-        {/* 오늘의 일정 */}
-        <div className="mt-8">
-          <h2 className="text-xl font-semibold mb-4">오늘의 일정</h2>
-          <div className="space-y-4">
-            {getTasksForDate(new Date().toISOString().split('T')[0]).map(task => (
-              <div key={task.id} className="bg-gray-800 rounded-lg p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-2 h-2 rounded-full ${getStatusColor(task.status)}`} />
-                    <div>
-                      <h3 className="font-semibold">{task.title}</h3>
-                      <div className="flex items-center gap-4 text-sm text-gray-400 mt-1">
-                        {task.startTime && (
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-4 h-4" />
-                            {task.startTime} - {task.endTime}
-                          </span>
-                        )}
-                        {task.planTitle && (
-                          <span className="flex items-center gap-1">
-                            <BookOpen className="w-4 h-4" />
-                            {task.planTitle}
-                          </span>
-                        )}
-                        {task.platform && (
-                          <span className="flex items-center gap-1">
-                            <Film className="w-4 h-4" />
-                            {task.platform}
-                          </span>
-                        )}
-                        {task.assignee && (
-                          <span className="flex items-center gap-1">
-                            <User className="w-4 h-4" />
-                            {task.assignee}
+                        {plan.platform && (
+                          <span className="px-2 py-1 text-[10px] bg-blue-500/10 text-blue-300 rounded-full whitespace-nowrap">
+                            {getPlatformLabel(plan.platform)}
                           </span>
                         )}
                       </div>
+                      <div className="mt-2 flex flex-wrap items-center gap-3 text-[11px] text-gray-500">
+                        {plan.target && (
+                          <span className="inline-flex items-center gap-1">
+                            <User className="w-3 h-3" />
+                            <span className="truncate max-w-[140px]">{plan.target}</span>
+                          </span>
+                        )}
+                        {plan.updatedAt && (
+                          <span className="inline-flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {new Date(plan.updatedAt).toLocaleDateString('ko-KR')}
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-6 p-4 border border-dashed border-gray-700 rounded-lg text-center text-sm text-gray-400 space-y-2">
+                  <p>저장된 기획서가 없습니다. 먼저 기획서를 작성해 주세요.</p>
+                  <Link
+                    href="/library"
+                    className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300"
+                  >
+                    <Plus className="w-4 h-4" /> 라이브러리에서 새 기획서 작성
+                  </Link>
+                </div>
+              )}
+
+              <div className="mt-4 pt-4 border-t border-gray-700 text-xs text-gray-500 flex items-center justify-between">
+                <span>기획서 수정/삭제는 라이브러리에서 관리할 수 있습니다.</span>
+                <Link
+                  href="/library"
+                  className="inline-flex items-center gap-1 text-blue-400 hover:text-blue-300"
+                >
+                  <BookOpen className="w-3 h-3" /> 이동
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          <div className="xl:col-span-2 space-y-6">
+            {viewMode === 'month' ? (
+              <div className="bg-gray-800 rounded-lg p-4">
+                <div className="grid grid-cols-7 gap-2 mb-2">
+                  {weekDays.map(day => (
+                    <div key={day} className="text-center text-sm font-semibold text-gray-400 py-2">
+                      {day}
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {task.reminder?.enabled && (
-                      <Bell className="w-4 h-4 text-blue-400" />
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-7 gap-2">
+                  {calendarDays.map((day, index) => {
+                    const dayTasks = getTasksForDate(day.dateString)
+                    const isToday = day.dateString === new Date().toISOString().split('T')[0]
+
+                    return (
+                      <div
+                        key={index}
+                        onDragOver={handleDragOver}
+                        onDrop={(e) => handleDrop(e, day.dateString)}
+                        onDoubleClick={() => openNewTask(day.dateString)}
+                        onContextMenu={(e) => {
+                          e.preventDefault()
+                          openNewTask(day.dateString)
+                        }}
+                        className={`min-h-[120px] p-2 rounded-lg border transition-colors ${
+                          day.isCurrentMonth 
+                            ? 'bg-gray-700 border-gray-600 hover:border-blue-500' 
+                            : 'bg-gray-800 border-gray-700 opacity-50'
+                        } ${isToday ? 'ring-2 ring-blue-500' : ''}`}
+                      >
+                        <div className={`text-sm font-semibold mb-1 ${
+                          isToday ? 'text-blue-400' : day.isCurrentMonth ? 'text-white' : 'text-gray-500'
+                        }`}>
+                          {day.date.getDate()}
+                        </div>
+
+                        <div className="space-y-1">
+                          {dayTasks.slice(0, 3).map(task => (
+                            <div
+                              key={task.id}
+                              draggable
+                              onDragStart={(e) => handleDragStart(e, task)}
+                              onClick={() => openExistingTask(task)}
+                              className="text-xs p-1 rounded cursor-move hover:opacity-80 transition-opacity"
+                              style={{ backgroundColor: task.color || '#6b7280' }}
+                              title={task.planTitle ? `${task.title} · ${task.planTitle}` : task.title}
+                            >
+                              <div className="flex items-center gap-1">
+                                <span>{getPriorityIcon(task.priority)}</span>
+                                <span className="truncate">{task.title}</span>
+                              </div>
+                              {task.planTitle && task.planTitle !== task.title && (
+                                <div className="text-[10px] opacity-80 truncate">
+                                  {task.planTitle}
+                                </div>
+                              )}
+                              {task.startTime && (
+                                <div className="text-xs opacity-75">{task.startTime}</div>
+                              )}
+                            </div>
+                          ))}
+                          {dayTasks.length > 3 && (
+                            <div className="text-xs text-gray-400 text-center">
+                              +{dayTasks.length - 3} more
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     )}
-                    {task.tags?.map(tag => (
-                      <span key={tag} className="px-2 py-1 bg-gray-700 rounded text-xs">
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
+                  )}
                 </div>
               </div>
-            ))}
-            {getTasksForDate(new Date().toISOString().split('T')[0]).length === 0 && (
-              <p className="text-gray-400 text-center py-8">오늘은 예정된 일정이 없습니다</p>
+            ) : (
+              <div className="bg-gray-800 rounded-lg p-8 text-center">
+                <Calendar className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+                <p className="text-gray-400">
+                  {viewMode === 'week' ? '주간' : '일간'} 뷰는 준비 중입니다
+                </p>
+              </div>
             )}
+
+            <div className="bg-gray-800 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold">오늘의 일정</h2>
+                <button
+                  type="button"
+                  onClick={() => openNewTask(new Date().toISOString().split('T')[0])}
+                  className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm transition-colors"
+                  disabled={!hasPlans}
+                >
+                  <Plus className="w-4 h-4" /> 새 일정
+                </button>
+              </div>
+              <div className="space-y-4">
+                {getTasksForDate(new Date().toISOString().split('T')[0]).map(task => (
+                  <div key={task.id} className="bg-gray-900/40 rounded-lg p-4 border border-gray-700">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-2 h-2 rounded-full ${getStatusColor(task.status)}`} />
+                        <div>
+                          <h3 className="font-semibold">{task.title}</h3>
+                          <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400 mt-1">
+                            {task.startTime && (
+                              <span className="flex items-center gap-1">
+                                <Clock className="w-4 h-4" />
+                                {task.startTime} - {task.endTime}
+                              </span>
+                            )}
+                            {task.planTitle && (
+                              <span className="flex items-center gap-1">
+                                <BookOpen className="w-4 h-4" />
+                                {task.planTitle}
+                              </span>
+                            )}
+                            {task.platform && (
+                              <span className="flex items-center gap-1">
+                                <Film className="w-4 h-4" />
+                                {task.platform}
+                              </span>
+                            )}
+                            {task.assignee && (
+                              <span className="flex items-center gap-1">
+                                <User className="w-4 h-4" />
+                                {task.assignee}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {task.reminder?.enabled && (
+                          <Bell className="w-4 h-4 text-blue-400" />
+                        )}
+                        {task.tags?.map(tag => (
+                          <span key={tag} className="px-2 py-1 bg-gray-700 rounded text-xs">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {getTasksForDate(new Date().toISOString().split('T')[0]).length === 0 && (
+                  <p className="text-gray-400 text-center py-8">오늘은 예정된 일정이 없습니다</p>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>

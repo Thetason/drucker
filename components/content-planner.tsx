@@ -151,6 +151,9 @@ export function ContentPlanner() {
     }
   }
 
+  type PlatformKey = keyof typeof platforms
+  const selectedPlatform = ((plan?.platform as PlatformKey) ?? 'youtube')
+
   const contentTemplates = {
     youtube: {
       "튜토리얼": {
@@ -502,7 +505,7 @@ export function ContentPlanner() {
             ))}
           </div>
           <p className="text-xs text-muted-foreground">
-            최대 러닝타임 · {platforms[plan.platform].maxRuntime}
+            최대 러닝타임 · {platforms[selectedPlatform].maxRuntime}
           </p>
         </div>
 

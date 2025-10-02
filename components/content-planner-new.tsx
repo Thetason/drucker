@@ -341,6 +341,9 @@ export function ContentPlannerNew() {
             {/* 리텐션 마커 */}
             <div className="space-y-3">
               <h3 className="font-medium">리텐션 마커 설계</h3>
+              <p className="text-xs text-muted-foreground">
+                최대 러닝타임 · Shorts 60초 / Reels 90초(최대 3분) / YouTube 12시간
+              </p>
               
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
@@ -379,7 +382,7 @@ export function ContentPlannerNew() {
 
                 <div className="flex items-start gap-3">
                   <div className="w-16 pt-1">
-                    <Badge variant="outline">90초</Badge>
+                    <Badge variant="outline">마지막 구간 (Shorts 45-60초 / Reels 75-90초)</Badge>
                   </div>
                   <div className="flex-1">
                     <Textarea
@@ -461,7 +464,7 @@ export function ContentPlannerNew() {
                 {[
                   { key: 'packageFirst', label: '제목/썸네일 먼저 완성', desc: '패키징이 콘텐츠를 이끈다' },
                   { key: 'promiseMatch', label: '약속 = 결과 일치', desc: '제목의 약속이 본문에서 실현' },
-                  { key: 'retentionPlan', label: '리텐션 마커 설정', desc: '15/45/90초 지점 계획' },
+                  { key: 'retentionPlan', label: '리텐션 마커 설정', desc: 'Shorts 15/30/60초 · Reels 30/60/90초' },
                   { key: 'evidenceIncluded', label: '증거 1개 포함', desc: '데이터/데모/방법론' },
                   { key: 'ctaClear', label: 'CTA 명확', desc: '고정댓글/DM 키워드 준비' }
                 ].map((item) => (

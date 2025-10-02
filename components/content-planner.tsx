@@ -132,18 +132,21 @@ export function ContentPlanner() {
       name: "유튜브",
       icon: <Video className="h-4 w-4" />,
       durations: ["5-10분", "10-15분", "15-20분", "20분+"],
+      maxRuntime: "최대 12시간 (최대 파일 256GB)",
       color: "bg-red-500"
     },
     shorts: {
       name: "쇼츠",
       icon: <Camera className="h-4 w-4" />,
-      durations: ["15초", "30초", "60초"],
+      durations: ["15초", "30초", "45초", "60초"],
+      maxRuntime: "최대 60초",
       color: "bg-pink-500"
     },
     reels: {
       name: "릴스",
       icon: <Edit className="h-4 w-4" />,
-      durations: ["15초", "30초", "60초", "90초"],
+      durations: ["15초", "30초", "60초", "90초", "3분"],
+      maxRuntime: "최대 90초 (최대 3분 클립 구성)",
       color: "bg-purple-500"
     }
   }
@@ -486,7 +489,10 @@ export function ContentPlanner() {
                 size="sm"
                 onClick={() => {
                   console.log('Platform clicked:', key)
-                  setPlan((prev: any) => ({...prev, platform: key as 'youtube' | 'shorts' | 'reels'}))
+                  setPlan((prev: any) => ({
+                    ...prev,
+                    platform: key as 'youtube' | 'shorts' | 'reels'
+                  }))
                 }}
                 className="flex items-center gap-2"
               >
@@ -495,6 +501,9 @@ export function ContentPlanner() {
               </Button>
             ))}
           </div>
+          <p className="text-xs text-muted-foreground">
+            최대 러닝타임 · {platforms[plan.platform].maxRuntime}
+          </p>
         </div>
 
         {/* Content Title */}

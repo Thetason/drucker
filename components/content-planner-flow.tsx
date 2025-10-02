@@ -360,7 +360,7 @@ export function ContentPlannerFlow() {
                   <span className="text-2xl">⏱️</span>
                   <div className="text-left">
                     <p className="font-medium">리텐션 마커</p>
-                    <p className="text-xs text-gray-500">15초/45초/90초 긴장 포인트</p>
+                    <p className="text-xs text-gray-500">Shorts 15·30·60초 / Reels 30·60·90초 긴장 포인트</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -373,6 +373,9 @@ export function ContentPlannerFlow() {
               
               {expandedSection === 'retention' && (
                 <div className="p-4 border-t bg-gray-50 space-y-3">
+                  <p className="text-xs text-gray-500">
+                    최대 러닝타임 · Shorts 60초 / Reels 90초(최대 3분) / YouTube 12시간
+                  </p>
                   <div className="flex gap-2">
                     <Badge variant="outline">15초</Badge>
                     <Input
@@ -398,7 +401,7 @@ export function ContentPlannerFlow() {
                     />
                   </div>
                   <div className="flex gap-2">
-                    <Badge variant="outline">90초</Badge>
+                    <Badge variant="outline">마지막 구간 (Shorts 45-60초 / Reels 75-90초)</Badge>
                     <Input
                       value={plan.retention.sec90}
                       onChange={(e) => setPlan({

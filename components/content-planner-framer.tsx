@@ -135,11 +135,11 @@ export function ContentPlannerFramer() {
                 </div>
                 <div className="text-center">
                   <div className="text-yellow-400 font-medium">교정</div>
-                  <div className="text-gray-500">30-90초</div>
+                  <div className="text-gray-500">30-60초 (Shorts) / 60-90초 (Reels)</div>
                 </div>
                 <div className="text-center">
                   <div className="text-green-400 font-medium">성과</div>
-                  <div className="text-gray-500">90초+</div>
+                  <div className="text-gray-500">60초+ (Reels 확장) · YouTube 최대 12시간</div>
                 </div>
               </div>
             </div>
@@ -153,6 +153,9 @@ export function ContentPlannerFramer() {
             <h3 className="text-2xl font-bold mb-6 bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
               리텐션 타임라인
             </h3>
+            <p className="text-sm text-gray-400 mb-6">
+              최대 러닝타임 · Shorts 60초 / Reels 90초(최대 3분) / YouTube 12시간
+            </p>
             
             {/* Timeline */}
             <div className="relative">
@@ -162,7 +165,7 @@ export function ContentPlannerFramer() {
                   { time: '0초', label: '훅', icon: <Zap />, color: 'from-red-500 to-orange-500' },
                   { time: '15초', label: '전환점', icon: <TrendingUp />, color: 'from-yellow-500 to-amber-500' },
                   { time: '45초', label: '새 정보', icon: <Sparkles />, color: 'from-blue-500 to-cyan-500' },
-                  { time: '90초', label: '핵심 가치', icon: <Target />, color: 'from-purple-500 to-pink-500' },
+                  { time: '45-60초 (Shorts) · 75-90초 (Reels)', label: '핵심 가치', icon: <Target />, color: 'from-purple-500 to-pink-500' },
                   { time: '끝', label: 'CTA', icon: <Rocket />, color: 'from-green-500 to-emerald-500' }
                 ].map((marker, index) => (
                   <div key={index} className="flex flex-col items-center">

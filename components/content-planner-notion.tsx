@@ -206,11 +206,14 @@ export function ContentPlannerNotion() {
 
           {/* Retention Markers */}
           <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-xl">⏱️</span>
-              <h3 className="font-semibold">리텐션 마커</h3>
-            </div>
-            <div className="grid grid-cols-3 gap-3">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-xl">⏱️</span>
+            <h3 className="font-semibold">리텐션 마커</h3>
+          </div>
+          <p className="text-xs text-gray-500 mb-3">
+            최대 러닝타임 · Shorts 60초 / Reels 90초(최대 3분) / YouTube 12시간
+          </p>
+          <div className="grid grid-cols-3 gap-3">
               <div className="p-3 bg-orange-50 rounded-lg">
                 <div className="text-xs font-medium text-orange-600 mb-1">15초</div>
                 <input
@@ -228,7 +231,7 @@ export function ContentPlannerNotion() {
                 />
               </div>
               <div className="p-3 bg-purple-50 rounded-lg">
-                <div className="text-xs font-medium text-purple-600 mb-1">90초</div>
+                <div className="text-xs font-medium text-purple-600 mb-1">Shorts 60초 · Reels 90초</div>
                 <input
                   type="text"
                   placeholder="핵심 가치"

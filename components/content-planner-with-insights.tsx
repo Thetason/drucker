@@ -90,19 +90,22 @@ const platformConfig = {
     name: 'YouTube',
     icon: '📺',
     durations: ['5-10분', '10-15분', '15-20분', '20분+'],
-    retentionPoints: ['15초', '45초', '90초', '3분', '5분']
+    retentionPoints: ['15초', '45초', '90초', '3분', '5분'],
+    maxRuntime: '최대 12시간 (최대 256GB)'
   },
   shorts: {
     name: 'Shorts',
     icon: '📱',
-    durations: ['15초', '30초', '60초'],
-    retentionPoints: ['3초', '10초', '20초']
+    durations: ['15초', '30초', '45초', '60초'],
+    retentionPoints: ['3초', '10초', '20초'],
+    maxRuntime: '최대 60초'
   },
   reels: {
     name: 'Reels',
     icon: '🎬',
-    durations: ['15초', '30초', '60초', '90초'],
-    retentionPoints: ['3초', '10초', '30초']
+    durations: ['15초', '30초', '60초', '90초', '3분'],
+    retentionPoints: ['3초', '10초', '30초'],
+    maxRuntime: '최대 90초 (최대 3분 클립 구성)'
   }
 }
 
@@ -660,6 +663,9 @@ export function ContentPlannerWithInsights() {
                   <option key={duration} value={duration}>{duration}</option>
                 ))}
               </select>
+              <p className="mt-1 text-xs text-gray-500">
+                최대 러닝타임 · {platformConfig[plan.platform].maxRuntime}
+              </p>
             </div>
             <div>
               <label className="text-sm font-medium text-gray-700 mb-2 block">목표</label>

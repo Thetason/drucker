@@ -483,6 +483,9 @@ export function ContentPlannerFramerV2() {
                 <div>
                   <h3 className="font-semibold">리텐션</h3>
                   <p className="text-xs text-gray-400">Key Moments</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    최대 러닝타임 · Shorts 60초 / Reels 90초(최대 3분) / YouTube 12시간
+                  </p>
                 </div>
               </div>
 
@@ -491,7 +494,7 @@ export function ContentPlannerFramerV2() {
                   { time: '0초', key: 'sec0', color: 'red', label: '훅' },
                   { time: '15초', key: 'sec15', color: 'orange', label: '전환' },
                   { time: '45초', key: 'sec45', color: 'yellow', label: '긴장' },
-                  { time: '90초', key: 'sec90', color: 'green', label: '가치' }
+                  { time: '45-60초 (Shorts) · 75-90초 (Reels)', key: 'sec90', color: 'green', label: '가치' }
                 ].map((item) => (
                   <div key={item.key} className="flex items-center gap-2">
                     <div className={`w-12 text-xs font-medium text-${item.color}-400`}>

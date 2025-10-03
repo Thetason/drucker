@@ -7,46 +7,15 @@ import { Textarea } from "@/components/ui/textarea"
 import Link from "next/link"
 import { ArrowLeft, MessageSquare, Star, TrendingUp, Users } from "lucide-react"
 
-const summaryMetrics = [
-  {
-    id: "satisfaction",
-    label: "평균 만족도",
-    value: "4.7 / 5",
-    description: "최근 30일 응답 기준",
-    trend: "+0.4"
-  },
-  {
-    id: "retention",
-    label: "재방문율",
-    value: "82%",
-    description: "주간 활성 사용자 유지율",
-    trend: "+6%"
-  },
-  {
-    id: "nps",
-    label: "추천 지수 (NPS)",
-    value: "37",
-    description: "프로모터 - 디트랙터",
-    trend: "+9"
-  }
-]
+const summaryMetrics: { id: string; label: string; value: string; description: string; trend: string }[] = []
 
-const highlightFeedback = [
-  {
-    id: "creator-01",
-    creator: "하나 (디지털 마케터)",
-    quote: "리텐션 가이드가 업데이트된 이후 숏폼 완성 시간이 절반으로 줄었어요. 일정 관리와 바로 연결되는 점이 가장 큰 장점입니다.",
-    tags: ["리텐션", "스케줄", "효율"],
-    score: 5
-  },
-  {
-    id: "creator-02",
-    creator: "지훈 (1인 크리에이터)",
-    quote: "30명 제한 베타라 그런지 피드백 반영 속도가 엄청 빠르네요. 템플릿을 직접 커스텀해 저장할 수 있었으면 좋겠어요.",
-    tags: ["커스텀", "템플릿"],
-    score: 4
-  }
-]
+const highlightFeedback: Array<{
+  id: string
+  creator: string
+  quote: string
+  tags: string[]
+  score: number
+}> = []
 
 const improvementQueue = [
   {
@@ -82,7 +51,7 @@ export default function FeedbackPage() {
               <p className="text-sm font-medium text-rose-600">Voice of Creator</p>
               <h1 className="mt-2 text-3xl font-bold">유저 피드백 센터</h1>
               <p className="mt-3 text-sm text-muted-foreground">
-                실제 크리에이터 13명의 의견을 토대로 제품을 함께 다듬고 있습니다. 수집된 피드백과 반영 현황을 한눈에 확인해 보세요.
+                정식 런칭(2025-10-02)을 앞두고 베타 크리에이터 의견을 수집 중입니다. 등록되는 피드백과 반영 현황을 이곳에서 투명하게 공유할 예정입니다.
               </p>
               <div className="mt-6 flex gap-3">
                 <Link href="/">
@@ -127,20 +96,28 @@ export default function FeedbackPage() {
             <Star className="h-5 w-5 text-yellow-500" />
             <h2 className="text-xl font-semibold">핵심 지표</h2>
           </div>
-          <div className="grid gap-4 md:grid-cols-3">
-            {summaryMetrics.map((metric) => (
-              <Card key={metric.id}>
-                <CardHeader>
-                  <CardTitle className="text-base">{metric.label}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2 text-sm text-muted-foreground">
-                  <p className="text-2xl font-semibold text-foreground">{metric.value}</p>
-                  <p>{metric.description}</p>
-                </CardContent>
-                <CardFooter className="text-xs text-emerald-600">지난달 대비 {metric.trend}</CardFooter>
-              </Card>
-            ))}
-          </div>
+          {summaryMetrics.length > 0 ? (
+            <div className="grid gap-4 md:grid-cols-3">
+              {summaryMetrics.map((metric) => (
+                <Card key={metric.id}>
+                  <CardHeader>
+                    <CardTitle className="text-base">{metric.label}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2 text-sm text-muted-foreground">
+                    <p className="text-2xl font-semibold text-foreground">{metric.value}</p>
+                    <p>{metric.description}</p>
+                  </CardContent>
+                  <CardFooter className="text-xs text-emerald-600">지난달 대비 {metric.trend}</CardFooter>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card className="border-dashed">
+              <CardContent className="py-6 text-sm text-muted-foreground">
+                첫 번째 베타 피드백이 수집되면 실제 지표를 공개할 예정입니다.
+              </CardContent>
+            </Card>
+          )}
         </section>
 
         <section>
@@ -148,33 +125,41 @@ export default function FeedbackPage() {
             <TrendingUp className="h-5 w-5 text-purple-500" />
             <h2 className="text-xl font-semibold">사용자 하이라이트</h2>
           </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            {highlightFeedback.map((feedback) => (
-              <Card key={feedback.id}>
-                <CardHeader className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Badge variant="outline">{feedback.creator}</Badge>
-                    <div className="flex items-center gap-1 text-yellow-500">
-                      {Array.from({ length: feedback.score }).map((_, idx) => (
-                        <Star key={idx} className="h-4 w-4 fill-yellow-500" />
+          {highlightFeedback.length > 0 ? (
+            <div className="grid gap-4 md:grid-cols-2">
+              {highlightFeedback.map((feedback) => (
+                <Card key={feedback.id}>
+                  <CardHeader className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Badge variant="outline">{feedback.creator}</Badge>
+                      <div className="flex items-center gap-1 text-yellow-500">
+                        {Array.from({ length: feedback.score }).map((_, idx) => (
+                          <Star key={idx} className="h-4 w-4 fill-yellow-500" />
+                        ))}
+                      </div>
+                    </div>
+                    <CardTitle className="text-lg">실사용 후기</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3 text-sm text-muted-foreground">
+                    <p className="text-base text-foreground">“{feedback.quote}”</p>
+                    <div className="flex flex-wrap gap-2">
+                      {feedback.tags.map((tag) => (
+                        <Badge key={tag} variant="secondary">
+                          #{tag}
+                        </Badge>
                       ))}
                     </div>
-                  </div>
-                  <CardTitle className="text-lg">실사용 후기</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3 text-sm text-muted-foreground">
-                  <p className="text-base text-foreground">“{feedback.quote}”</p>
-                  <div className="flex flex-wrap gap-2">
-                    {feedback.tags.map((tag) => (
-                      <Badge key={tag} variant="secondary">
-                        #{tag}
-                      </Badge>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card className="border-dashed">
+              <CardContent className="py-6 text-sm text-muted-foreground">
+                아직 등록된 사용자 후기가 없습니다. 정식 오픈과 함께 실사용 후기를 순차적으로 공유하겠습니다.
+              </CardContent>
+            </Card>
+          )}
         </section>
 
         <section>

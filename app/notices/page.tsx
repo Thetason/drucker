@@ -4,12 +4,12 @@ import { CalendarDays, RefreshCcw, AlertTriangle, Info } from "lucide-react"
 
 const scheduledNotices = [
   {
-    id: "maintenance-feb",
-    title: "2월 정기 점검",
-    type: "서비스 점검",
-    window: "2025-02-05 02:00 ~ 03:30 KST",
-    summary: "안정화 패치 적용을 위한 점검이 예정되어 있습니다.",
-    details: "점검 시간 동안 로그인과 기획서 저장이 일시적으로 중단됩니다. 진행 중인 작업은 점검 시작 전에 저장해 주세요.",
+    id: "launch-oct",
+    title: "10월 2일 정식 런칭",
+    type: "서비스 출시",
+    window: "2025-10-02 10:00 ~ 12:00 KST",
+    summary: "드러커 정식 서비스가 10월 2일에 오픈됩니다.",
+    details: "출시 준비를 위한 최종 점검 동안 로그인과 기획서 저장이 일시적으로 제한됩니다. 진행 중인 작업은 점검 시작 전에 저장해 주세요.",
     status: "예정"
   },
   {

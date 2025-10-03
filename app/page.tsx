@@ -114,6 +114,16 @@ export default function HomePage() {
             
             {/* Quick Links */}
             <div className="flex items-center gap-2">
+              <Link href="/notices">
+                <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                  <span className="hidden md:inline">공지사항</span>
+                </Button>
+              </Link>
+              <Link href="/guide">
+                <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                  <span className="hidden md:inline">사용안내</span>
+                </Button>
+              </Link>
               <Link href="/library">
                 <Button variant="ghost" size="sm" className="flex items-center gap-2">
                   <BookOpen className="h-4 w-4" />

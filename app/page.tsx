@@ -124,6 +124,11 @@ export default function HomePage() {
                   <span className="hidden md:inline">사용안내</span>
                 </Button>
               </Link>
+              <Link href="/feedback">
+                <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                  <span className="hidden md:inline">유저 피드백</span>
+                </Button>
+              </Link>
               <Link href="/library">
                 <Button variant="ghost" size="sm" className="flex items-center gap-2">
                   <BookOpen className="h-4 w-4" />

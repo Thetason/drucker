@@ -40,15 +40,54 @@ export async function POST(request: Request) {
       )
     }
 
+    if (!user.isActive) {
+      return NextResponse.json(
+        { error: '비활성화된 계정입니다. 관리자에게 문의해주세요.' },
+        { status: 403 }
+      )
+    }
+
+    const userAgent = request.headers.get('user-agent') ?? undefined
+    const forwardedFor = request.headers.get('x-forwarded-for') ?? request.headers.get('x-real-ip')
+    const ipAddress = forwardedFor?.split(',')[0]?.trim() ?? undefined
+
+    const [, updatedUser] = await prisma.$transaction([
+      prisma.loginActivity.create({
+        data: {
+          userId: user.id,
+          userAgent,
+          ipAddress
+        }
+      }),
+      prisma.user.update({
+        where: { id: user.id },
+        data: {
+          loginCount: { increment: 1 },
+          lastLoginAt: new Date()
+        },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          role: true,
+          isActive: true,
+          loginCount: true,
+          lastLoginAt: true
+        }
+      })
+    ])
+
     // 성공 응답
     const response = NextResponse.json({
       message: '로그인 성공',
       user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role,
-        isActive: user.isActive
+        id: updatedUser.id,
+        email: updatedUser.email,
+        name: updatedUser.name,
+        role: updatedUser.role,
+        isActive: updatedUser.isActive,
+        loginCount: updatedUser.loginCount,
+        lastLoginAt: updatedUser.lastLoginAt
       }
     })
 
@@ -59,7 +98,7 @@ export async function POST(request: Request) {
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7 // 7일
     })
-    response.cookies.set('user', user.email, {
+    response.cookies.set('user', updatedUser.email, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',

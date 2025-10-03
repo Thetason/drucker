@@ -20,6 +20,8 @@ model User {
   isActive  Boolean  @default(true)   // 계정 활성화 상태
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  loginCount   Int       @default(0)
+  lastLoginAt  DateTime?
   
   // User's persona data
   persona   Persona?
@@ -29,6 +31,9 @@ model User {
   
   // User's tasks
   tasks     Task[]
+
+  // User login activity
+  loginActivities LoginActivity[]
   
   // Password reset requests
   passwordResetRequests PasswordResetRequest[]
@@ -141,4 +146,13 @@ enum ResetStatus {
   PENDING
   APPROVED
   REJECTED
+}
+
+model LoginActivity {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userAgent  String?
+  ipAddress  String?
+  createdAt  DateTime @default(now())
 }

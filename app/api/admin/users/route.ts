@@ -49,6 +49,8 @@ export async function GET() {
         isActive: true,
         createdAt: true,
         updatedAt: true,
+        loginCount: true,
+        lastLoginAt: true,
         _count: {
           select: {
             contentPlans: true,
@@ -61,13 +63,25 @@ export async function GET() {
       }
     })
 
+    const totalLogins = users.reduce((sum, user) => sum + user.loginCount, 0)
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+    const loginsLast7Days = await prisma.loginActivity.count({
+      where: {
+        createdAt: {
+          gte: sevenDaysAgo
+        }
+      }
+    })
+
     const stats = {
       total: users.length,
       active: users.filter(u => u.isActive).length,
       masters: users.filter(u => u.role === 'MASTER').length,
       admins: users.filter(u => u.role === 'ADMIN').length,
       users: users.filter(u => u.role === 'USER').length,
-      activeUsers: users.filter(u => u.role === 'USER' && u.isActive).length
+      activeUsers: users.filter(u => u.role === 'USER' && u.isActive).length,
+      totalLogins,
+      loginsLast7Days
     }
 
     return NextResponse.json({

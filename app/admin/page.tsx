@@ -13,7 +13,9 @@ import {
   Search,
   FileText,
   CheckCircle,
-  Lock
+  Lock,
+  LogIn,
+  Clock
 } from "lucide-react"
 
 interface UserData {
@@ -24,6 +26,8 @@ interface UserData {
   isActive: boolean
   createdAt: string
   updatedAt: string
+  loginCount: number
+  lastLoginAt: string | null
   _count: {
     contentPlans: number
     tasks: number
@@ -37,6 +41,8 @@ interface Stats {
   admins: number
   users: number
   activeUsers: number
+  totalLogins: number
+  loginsLast7Days: number
 }
 
 interface ResetRequest {
@@ -375,6 +381,26 @@ export default function AdminDashboard() {
                 <Lock className="h-8 w-8 text-yellow-500" />
               </div>
             </div>
+
+            <div className="bg-orange-50 p-4 rounded-xl border border-orange-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-orange-600">총 로그인</p>
+                  <p className="text-2xl font-bold text-orange-700">{stats.totalLogins}</p>
+                </div>
+                <LogIn className="h-8 w-8 text-orange-500" />
+              </div>
+            </div>
+
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-slate-600">최근 7일 로그인</p>
+                  <p className="text-2xl font-bold text-slate-700">{stats.loginsLast7Days}</p>
+                </div>
+                <Clock className="h-8 w-8 text-slate-500" />
+              </div>
+            </div>
           </div>
         )}
 
@@ -438,6 +464,9 @@ export default function AdminDashboard() {
                   가입일
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  최근 로그인
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   작업
                 </th>
               </tr>
@@ -489,10 +518,19 @@ export default function AdminDashboard() {
                         <CheckCircle className="h-3 w-3" />
                         {user._count.tasks}
                       </span>
+                      <span className="flex items-center gap-1">
+                        <LogIn className="h-3 w-3" />
+                        {user.loginCount}
+                      </span>
                     </div>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600">
                     {new Date(user.createdAt).toLocaleDateString('ko-KR')}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-600">
+                    {user.lastLoginAt
+                      ? new Date(user.lastLoginAt).toLocaleString('ko-KR')
+                      : <span className="text-gray-400">기록 없음</span>}
                   </td>
                   <td className="px-6 py-4 space-x-2">
                     <button

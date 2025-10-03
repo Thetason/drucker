@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Target, Calendar, CheckCircle2, Sparkles, Layers, ClipboardCheck } from "lucide-react"
+import { Target, Calendar, CheckCircle2, Sparkles, Layers, ClipboardCheck, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 
 const steps = [
@@ -53,7 +53,7 @@ const faq = [
   },
   {
     question: "지원 채널은 어디인가요?",
-    answer: "운영팀은 평일 10:00~18:00(KST) support@drucker.app 메일로 문의를 받습니다. 장애 긴급 신고는 공지사항의 운영 안내를 참고하세요."
+    answer: "운영팀은 평일 10:00~18:00(KST) vocal202065@gmail.com 메일로 문의를 받습니다. 장애 긴급 신고는 공지사항의 운영 안내를 참고하세요."
   }
 ]
 
@@ -71,8 +71,8 @@ export default function GuidePage() {
             <div className="mt-6 flex gap-3">
               <Link href="/">
                 <Button size="sm" className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4" />
-                  대시보드로 이동
+                  <ArrowLeft className="h-4 w-4" />
+                  메인으로 돌아가기
                 </Button>
               </Link>
               <Link href="/library">

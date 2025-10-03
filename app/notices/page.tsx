@@ -1,6 +1,8 @@
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { CalendarDays, RefreshCcw, AlertTriangle, Info } from "lucide-react"
+import Link from "next/link"
+import { CalendarDays, RefreshCcw, AlertTriangle, Info, ArrowLeft } from "lucide-react"
 
 const scheduledNotices = [
   {
@@ -11,15 +13,6 @@ const scheduledNotices = [
     summary: "드러커 정식 서비스가 10월 2일에 오픈됩니다.",
     details: "출시 준비를 위한 최종 점검 동안 로그인과 기획서 저장이 일시적으로 제한됩니다. 진행 중인 작업은 점검 시작 전에 저장해 주세요.",
     status: "예정"
-  },
-  {
-    id: "release-0129",
-    title: "v0.9.2 패치 배포",
-    type: "기능 업데이트",
-    window: "2025-01-29 23:00 ~ 23:15 KST",
-    summary: "콘텐츠 리텐션 가이드와 공지 섹션이 추가됩니다.",
-    details: "배포 중에는 페이지 새로고침 시 최신 UI가 순차적으로 반영됩니다.",
-    status: "완료"
   }
 ]
 
@@ -34,7 +27,7 @@ const infoNotices = [
   {
     id: "support-window",
     title: "운영 및 문의 시간",
-    description: "평일 10:00~18:00 (KST)에 운영 지원을 제공합니다. 급한 장애 신고는 관리자 메일 support@drucker.app 으로 연락해 주세요.",
+    description: "평일 10:00~18:00 (KST)에 운영 지원을 제공합니다. 급한 장애 신고는 관리자 메일 vocal202065@gmail.com 으로 연락해 주세요.",
     icon: <AlertTriangle className="h-5 w-5 text-amber-500" />,
     tone: "warning"
   }
@@ -52,6 +45,14 @@ export default function NoticesPage() {
               <p className="mt-3 text-sm text-muted-foreground">
                 서비스 점검, 기능 업데이트, 이용 제한 정보 등을 실시간으로 공유합니다.
               </p>
+              <div className="mt-6">
+                <Link href="/">
+                  <Button size="sm" variant="outline" className="flex items-center gap-2">
+                    <ArrowLeft className="h-4 w-4" />
+                    메인으로 돌아가기
+                  </Button>
+                </Link>
+              </div>
             </div>
             <div className="rounded-xl bg-blue-50 px-4 py-3 text-sm text-blue-600">
               <p className="font-medium">현재 가입자 수</p>

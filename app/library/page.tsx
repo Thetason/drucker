@@ -44,7 +44,7 @@ interface ContentPlan {
   source?: 'sample' | 'user'
 }
 
-const DEFAULT_THUMBNAIL = '/api/placeholder/400/225'
+const DEFAULT_THUMBNAIL = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="225"%3E%3Crect width="400" height="225" fill="%23374151"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="24" fill="%239CA3AF"%3E썸네일 없음%3C/text%3E%3C/svg%3E'
 const DEFAULT_RESOURCES = ['기획', '촬영', '편집']
 
 const mapPlatformLabel = (platform?: string) => {

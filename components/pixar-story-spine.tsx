@@ -177,9 +177,7 @@ export function PixarStorySpine() {
                 const data = await response.json()
                 
                 if (data.success) {
-                  alert("📖 스토리 개선 제안:
-
-" + data.result)
+                  alert("📖 스토리 개선 제안:\n\n" + data.result)
                 } else {
                   alert("오류가 발생했습니다. 다시 시도해주세요.")
                 }

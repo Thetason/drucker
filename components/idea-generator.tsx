@@ -270,9 +270,7 @@ export function IdeaGenerator() {
                 const data = await response.json()
                 
                 if (data.success) {
-                  alert("💡 아이디어 발전 제안:
-
-" + data.result)
+                  alert("💡 아이디어 발전 제안:\n\n" + data.result)
                 } else {
                   alert("오류가 발생했습니다. 다시 시도해주세요.")
                 }

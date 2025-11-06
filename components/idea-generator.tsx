@@ -270,17 +270,19 @@ export function IdeaGenerator() {
                 const data = await response.json()
                 
                 if (data.success) {
-                  alert("AI 제안:\n\n" + data.result)
+                  alert("💡 아이디어 발전 제안:
+
+" + data.result)
                 } else {
-                  alert(data.error || "AI 서비스를 사용할 수 없습니다.")
+                  alert("오류가 발생했습니다. 다시 시도해주세요.")
                 }
               } catch (error) {
-                alert("AI 연결 실패. Ollama가 실행 중인지 확인해주세요.")
+                alert("서버 연결에 실패했습니다. 잠시 후 다시 시도해주세요.")
               }
             }}
           >
             <Sparkles className="h-4 w-4 mr-2" />
-            AI로 더 발전시키기
+            더 발전시키기
           </Button>
           <Button variant="outline" className="flex-1">
             아이디어 저장
